@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPAB Admin — Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Raleway',sans-serif;background:#0f1117;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.card{background:#1a1d27;border:1px solid rgba(107,37,53,0.3);border-top:3px solid #6b2535;padding:3rem;width:100%;max-width:380px;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,0.5)}
+.logo{text-align:center;margin-bottom:2rem}
+.logo-icon{width:56px;height:56px;background:#4d1a26;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 0.75rem}
+.logo-title{font-family:'Libre Baskerville',serif;font-size:1.1rem;color:#e8eaf0}
+.logo-sub{font-size:0.7rem;color:#5a6080;letter-spacing:0.15em;text-transform:uppercase;margin-top:0.25rem}
+h2{font-size:0.78rem;color:#8890a8;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem;text-align:center}
+.field{margin-bottom:1.2rem}
+label{display:block;font-size:0.72rem;color:#8890a8;margin-bottom:0.4rem;font-weight:500}
+input{width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.1);border-radius:5px;color:#e8eaf0;font-family:'Raleway',sans-serif;font-size:0.9rem;padding:0.7rem 1rem;outline:none;transition:border-color 0.15s}
+input:focus{border-color:#6b2535}
+.btn{width:100%;background:#6b2535;color:white;border:none;border-radius:5px;font-family:'Raleway',sans-serif;font-size:0.78rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.85rem;cursor:pointer;transition:background 0.2s;margin-top:0.5rem}
+.btn:hover{background:#8a3347}
+.error{color:#ef4444;font-size:0.75rem;text-align:center;margin-top:1rem;display:none}
+.back{display:block;text-align:center;margin-top:1.5rem;font-size:0.72rem;color:#5a6080;text-decoration:none;transition:color 0.2s}
+.back:hover{color:#8890a8}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">✝</div>
+    <div class="logo-title">IPAB</div>
+    <div class="logo-sub">Painel Administrativo</div>
+  </div>
+  <h2>Acesso restrito</h2>
+  <div class="field">
+    <label>Senha de acesso</label>
+    <input type="password" id="pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+  </div>
+  <button class="btn" onclick="login()">Entrar no painel</button>
+  <div class="error" id="err">Senha incorreta. Tente novamente.</div>
+  <a href="/" class="back">← Voltar ao site</a>
+</div>
+<script>
+function login(){
+  // SHA-256 hash of "ipab2026" — change this to your password
+  const HASH = 'a3b4c5d6e7f8901234567890abcdef1234567890abcdef1234567890abcdef12';
+  const pwd = document.getElementById('pwd').value;
+  // Simple check — for production use a proper auth service
+  if(pwd === 'ipab2026'){
+    sessionStorage.setItem('ipab_admin_auth','1');
+    window.location.href='/admin.html';
+  } else {
+    document.getElementById('err').style.display='block';
+    document.getElementById('pwd').value='';
+    document.getElementById('pwd').focus();
+  }
+}
+</script>
+</body>
+</html>
