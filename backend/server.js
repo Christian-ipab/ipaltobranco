@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(__dirname, 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ipab2026';
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || 'ipab2026').trim();
 
 app.use(express.json({ limit: '25mb' }));
 app.use(session({
@@ -97,6 +97,9 @@ app.put('/api/content', requireAdmin, async (req, res, next) => {
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
+app.get('/admin-login', (req, res) => res.redirect(302, '/admin-login.html'));
+app.get('/admin-logi', (req, res) => res.redirect(302, '/admin-login.html'));
+app.get('/admin', (req, res) => res.redirect(302, '/admin.html'));
 app.get('/admin-login.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'admin-login.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'admin.html')));
 app.use(express.static(ROOT_DIR));
