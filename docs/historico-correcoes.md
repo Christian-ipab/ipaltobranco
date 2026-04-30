@@ -107,37 +107,85 @@ Correcoes/orientacoes:
 - Quando o GitHub recusou o push por `non-fast-forward`, foi executado `git pull --rebase` antes de reenviar.
 - Apos o rebase, o push foi concluido com sucesso.
 
-## Estado esperado de uso local
+### Backend so funcionava local e nao persistia entre restarts
 
-Para editar e ver alteracoes:
+Queixa:
+- O backend Express so funcionava em `http://localhost:3000`. No dominio publico (`ipaltobranco.com.br`, hospedado em GitHub Pages), nada do `/api/*` respondia.
+- O objetivo declarado era que qualquer pessoa com credenciais pudesse editar pela web.
+- Localmente, a sessao se perdia a cada restart do `npm run dev` porque o `express-session` usava `MemoryStore`.
 
-1. Iniciar o backend:
+Diagnostico:
+- GitHub Pages so serve arquivos estaticos. Node.js nunca executou la.
+- Os tres HTMLs tinham um redirect para `localhost:3000` que era util localmente mas inutil/confuso em producao.
+- Persistencia em arquivo JSON (`backend/data/content.json`) nao funciona em hosts serverless e perde dados em reinicios em outros lugares.
+
+Correcoes:
+- Persistencia movida para um modulo dedicado (`backend/db.js`), com gravacao atomica em `content.json` e auditoria simples em `content-history.jsonl`.
+- Em producao no Fly.io, esses arquivos ficam no volume persistente montado em `/data`.
+- Sessoes movidas para cookies assinados (`cookie-session`), evitando `MemoryStore` no servidor.
+- Auth multi-usuario: variavel `ADMIN_USERS="usuario:bcrypt_hash,..."`. Modo legado de senha unica (`ADMIN_PASSWORD`) continua funcionando como fallback enquanto a migracao nao acontece.
+- Login agora aceita usuario+senha. Em modo legado, o campo de usuario fica oculto.
+- Rate limit em `/api/login` (8 tentativas / 15min / IP).
+- Cookie `secure: true` em producao, `trust proxy` ligado para Fly.io.
+- Os redirects `localhost:3000` nos HTMLs foram removidos. Acesso via `file://` mostra mensagem clara em vez de redirecionar.
+- Scripts de deploy: `Dockerfile`, `fly.toml`, `.dockerignore`.
+
+## Estado esperado de uso local (apos a migracao)
+
+1. Configurar variaveis de ambiente:
+
+```powershell
+copy .env.example .env
+```
+
+   Ajustar `SESSION_SECRET` e (opcional) configurar `ADMIN_USERS`.
+
+2. Instalar dependencias:
+
+```powershell
+npm.cmd install
+```
+
+3. Iniciar o backend:
 
 ```powershell
 npm.cmd run dev
 ```
 
-2. Abrir o painel:
+4. Abrir o painel:
 
 ```text
 http://localhost:3000/admin-login.html
 ```
 
-3. Entrar com a senha local.
+5. Login:
+   - Em modo legado (sem `ADMIN_USERS`): apenas a senha (`ADMIN_PASSWORD`).
+   - Em modo multi-usuario: usuario + senha bcrypt.
 
-4. Fazer a alteracao e clicar em `Salvar alteracoes`.
+6. Para gerar um hash bcrypt para `ADMIN_USERS`:
 
-5. Conferir o site:
-
-```text
-http://localhost:3000/
+```powershell
+npm.cmd run hash -- minhaSenha123
 ```
 
-6. O arquivo `backend/data/content.json` deve existir depois de uma alteracao salva.
+   Depois adicione `usuario:hash_gerado` em `ADMIN_USERS` no `.env` (separe varios com virgula).
+
+7. Conferir o site em `http://localhost:3000/`. O arquivo `backend/data/content.json` deve existir apos o primeiro save.
+
+## Estado esperado em producao (Fly.io)
+
+1. Conta Fly.io criada e `flyctl` instalado.
+2. `fly launch` na raiz do projeto (detecta o Dockerfile).
+3. `fly volumes create ipab_data --size 1 --region gru`.
+4. `fly secrets set SESSION_SECRET=<aleatorio> ADMIN_USERS="usuario:hash,..."`.
+5. `fly deploy` e teste em `https://<app>.fly.dev`.
+6. `fly certs create ipaltobranco.com.br` e atualizar registros no Registro.br conforme instrucao do Fly.
+7. Apagar o arquivo `CNAME` (era exclusivo do GitHub Pages) e desligar GitHub Pages no `Settings -> Pages`.
 
 ## Observacoes tecnicas
 
-- `backend/data/content.json` fica fora do Git por estar listado no `.gitignore`.
-- Isso evita versionar conteudo local editado pelo painel.
+- O diretorio `backend/data/` (conteudo salvo + historico) fica fora do Git.
+- Em producao, o Fly monta o volume em `/data`. Local: usa `backend/data/`.
 - Se `/api/public-content` retornar `{"content":null}`, nenhuma alteracao foi salva ainda.
-- Se o painel mostrar erro de backend, confirmar se o servidor esta rodando em `http://localhost:3000`.
+- Auditoria: `GET /api/history` (admin) retorna as 20 ultimas edicoes (quem salvou e quando).
+- Para revogar acesso de um editor: remover a entrada dele de `ADMIN_USERS` e fazer `fly deploy` (ou reiniciar o backend local).

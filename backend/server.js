@@ -1,28 +1,35 @@
-const fs = require('fs/promises');
 const path = require('path');
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+const { readContent, writeContent, recentHistory } = require('./db');
+const { verifyCredentials, isLegacyMode } = require('./auth');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
-const DATA_DIR = path.join(__dirname, 'data');
-const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
-const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || 'ipab2026').trim();
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+const SESSION_SECRET = process.env.SESSION_SECRET || (IS_PRODUCTION ? null : 'ipab-dev-session-secret');
+if (!SESSION_SECRET) {
+  console.error('[fatal] SESSION_SECRET must be set in production.');
+  process.exit(1);
+}
+
+if (IS_PRODUCTION) {
+  app.set('trust proxy', 1);
+}
 
 app.use(express.json({ limit: '25mb' }));
-app.use(session({
+app.use(cookieSession({
   name: 'ipab.sid',
-  secret: process.env.SESSION_SECRET || 'ipab-dev-session-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 8
-  }
+  keys: [SESSION_SECRET],
+  maxAge: 1000 * 60 * 60 * 8,
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: IS_PRODUCTION
 }));
 
 function requireAdmin(req, res, next) {
@@ -30,67 +37,80 @@ function requireAdmin(req, res, next) {
   return res.status(401).json({ error: 'unauthorized' });
 }
 
-async function readContent() {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too_many_attempts' }
+});
+
+app.post('/api/login', loginLimiter, async (req, res, next) => {
   try {
-    const raw = await fs.readFile(CONTENT_FILE, 'utf8');
-    return JSON.parse(raw);
+    const { username, password } = req.body || {};
+    const result = await verifyCredentials(username, password);
+    if (!result.ok) {
+      return res.status(401).json({ error: 'invalid_credentials' });
+    }
+
+    req.session = { admin: true, username: result.username, issuedAt: Date.now() };
+    return res.json({ ok: true, username: result.username });
   } catch (error) {
-    if (error.code === 'ENOENT') return null;
-    throw error;
+    next(error);
   }
-}
-
-async function writeContent(content) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(CONTENT_FILE, JSON.stringify(content, null, 2), 'utf8');
-}
-
-app.post('/api/login', (req, res) => {
-  const { password } = req.body || {};
-  if (String(password || '').trim() !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'invalid_credentials' });
-  }
-
-  req.session.admin = true;
-  return res.json({ ok: true });
 });
 
 app.post('/api/logout', requireAdmin, (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie('ipab.sid');
-    res.json({ ok: true });
-  });
+  req.session = null;
+  res.json({ ok: true });
 });
 
 app.get('/api/me', (req, res) => {
-  res.json({ authenticated: req.session && req.session.admin === true });
+  const authenticated = !!(req.session && req.session.admin === true);
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    authenticated,
+    username: authenticated ? req.session.username || null : null,
+    legacyMode: isLegacyMode()
+  });
 });
 
-app.get('/api/content', requireAdmin, async (req, res, next) => {
-  try {
-    res.json({ content: await readContent() });
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.get('/api/public-content', async (req, res, next) => {
+app.get('/api/content', requireAdmin, (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
-    res.json({ content: await readContent() });
+    res.json({ content: readContent() });
   } catch (error) {
     next(error);
   }
 });
 
-app.put('/api/content', requireAdmin, async (req, res, next) => {
+app.get('/api/public-content', (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ content: readContent() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.put('/api/content', requireAdmin, (req, res, next) => {
   try {
     if (!req.body || typeof req.body.content !== 'object' || req.body.content === null) {
       return res.status(400).json({ error: 'invalid_content' });
     }
 
-    await writeContent(req.body.content);
+    writeContent(req.body.content, req.session.username || 'unknown');
+    res.set('Cache-Control', 'no-store');
     res.json({ ok: true, content: req.body.content });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/history', requireAdmin, (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ entries: recentHistory(20) });
   } catch (error) {
     next(error);
   }
@@ -115,5 +135,8 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`IPAB backend running at http://localhost:${PORT}`);
+  console.log(`IPAB backend running on port ${PORT} (${IS_PRODUCTION ? 'production' : 'development'})`);
+  if (isLegacyMode()) {
+    console.warn('[auth] Running in legacy single-password mode (ADMIN_PASSWORD). Migrate to ADMIN_USERS for multi-user support.');
+  }
 });

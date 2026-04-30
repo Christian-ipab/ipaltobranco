@@ -5,11 +5,14 @@
   "type": "commonjs",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "node backend/server.js"
+    "dev": "node backend/server.js",
+    "hash": "node backend/hash-password.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-session": "^2.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "express-session": "^1.18.1"
+    "express-rate-limit": "^7.4.1"
   }
 }

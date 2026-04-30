@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 (function(){
-  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (location.protocol === 'file:' || (isLocalHost && location.port && location.port !== '3000')) {
-    location.replace('http://localhost:3000/admin.html');
+  if (location.protocol === 'file:') {
+    document.documentElement.innerHTML = '<body style="font-family:sans-serif;padding:2rem;background:#0f1117;color:#e8eaf0;"><h1>Abra pelo site</h1><p>O painel precisa ser acessado pelo servidor (http://localhost:3000 em desenvolvimento, ou pelo dom&iacute;nio em produ&ccedil;&atilde;o).</p></body>';
   }
 })();
 </script>
@@ -172,7 +171,13 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   fetch('/api/me', { credentials: 'same-origin' })
     .then(response => response.ok ? response.json() : { authenticated: false })
     .then(user => {
-      if(!user.authenticated) window.location.replace('admin-login.html');
+      if(!user.authenticated) {
+        window.location.replace('admin-login.html');
+        return;
+      }
+      window.__ADMIN_USER__ = user.username || null;
+      const tag = document.getElementById('loggedInAs');
+      if (tag && user.username) tag.textContent = user.username;
     })
     .catch(() => window.location.replace('admin-login.html'));
 })();
@@ -197,6 +202,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Exportar Site
       </button>
+      <span id="loggedInAs" style="font-size:0.72rem;color:#8890a8;letter-spacing:0.08em;text-transform:uppercase;margin-right:0.4rem;"></span>
       <button class="btn btn-ghost" onclick="logoutAdmin()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sair
@@ -637,7 +643,7 @@ async function saveData(data) {
     return true;
   } catch (error) {
     console.error('Erro ao salvar no servidor:', error);
-    showStatus('Erro ao salvar. Verifique se esta em http://localhost:3000', false);
+    showStatus('Erro ao salvar. Verifique sua conex&atilde;o e tente novamente.', false);
     return false;
   }
 }
@@ -659,7 +665,7 @@ async function loadServerData() {
       await saveData(DATA);
     }
   } catch (error) {
-    showStatus('Backend indisponivel. Abra pelo http://localhost:3000', false);
+    showStatus('Backend indispon&iacute;vel. Verifique sua conex&atilde;o.', false);
   }
 }
 

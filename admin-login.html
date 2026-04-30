@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 (function(){
-  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (location.protocol === 'file:' || (isLocalHost && location.port && location.port !== '3000')) {
-    location.replace('http://localhost:3000/admin-login.html');
+  if (location.protocol === 'file:') {
+    document.documentElement.innerHTML = '<body style="font-family:sans-serif;padding:2rem;background:#0f1117;color:#e8eaf0;"><h1>Abra pelo site</h1><p>Esta p&aacute;gina precisa ser carregada pelo servidor (http://localhost:3000 em desenvolvimento, ou pelo dom&iacute;nio em produ&ccedil;&atilde;o), n&atilde;o como arquivo local.</p></body>';
   }
 })();
 </script>
@@ -41,17 +40,31 @@ input:focus{border-color:#6b2535}
     <div class="logo-sub">Painel Administrativo</div>
   </div>
   <h2>Acesso restrito</h2>
+  <div class="field" id="userField">
+    <label>Usuário</label>
+    <input type="text" id="usr" autocomplete="username" placeholder="seu usuário" onkeydown="if(event.key==='Enter')login()">
+  </div>
   <div class="field">
     <label>Senha de acesso</label>
-    <input type="password" id="pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+    <input type="password" id="pwd" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
   </div>
   <button class="btn" id="loginBtn" onclick="login()">Entrar no painel</button>
-  <div class="error" id="err">Senha incorreta. Tente novamente.</div>
+  <div class="error" id="err">Usuário ou senha incorretos.</div>
   <a href="index.html" class="back">← Voltar ao site</a>
 </div>
 <script>
+fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' })
+  .then(r => r.ok ? r.json() : null)
+  .then(info => {
+    if (info && info.legacyMode) {
+      document.getElementById('userField').style.display = 'none';
+    }
+  })
+  .catch(() => {});
+
 async function login(){
-  const pwd = document.getElementById('pwd').value.trim();
+  const usr = document.getElementById('usr').value.trim();
+  const pwd = document.getElementById('pwd').value;
   const err = document.getElementById('err');
   const btn = document.getElementById('loginBtn');
   err.style.display = 'none';
@@ -63,14 +76,20 @@ async function login(){
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwd })
+      body: JSON.stringify({ username: usr, password: pwd })
     });
 
-    if(!response.ok) throw new Error('invalid_login');
-    window.location.href='admin.html';
+    if (response.status === 429) {
+      err.textContent = 'Muitas tentativas. Aguarde alguns minutos.';
+      err.style.display = 'block';
+      return;
+    }
+    if (!response.ok) throw new Error('invalid_login');
+    window.location.href = 'admin.html';
   } catch (error) {
-    err.style.display='block';
-    document.getElementById('pwd').value='';
+    err.textContent = 'Usuário ou senha incorretos.';
+    err.style.display = 'block';
+    document.getElementById('pwd').value = '';
     document.getElementById('pwd').focus();
   } finally {
     btn.disabled = false;

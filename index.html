@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 (function(){
-  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (location.protocol === 'file:' || (isLocalHost && location.port && location.port !== '3000')) {
-    location.replace('http://localhost:3000/');
+  if (location.protocol === 'file:') {
+    document.documentElement.innerHTML = '<body style="font-family:sans-serif;padding:2rem;"><h1>Abra pelo site</h1><p>Esta p&aacute;gina precisa ser carregada pelo servidor (em desenvolvimento, http://localhost:3000), n&atilde;o como arquivo local.</p></body>';
   }
 })();
 </script>
