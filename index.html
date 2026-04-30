@@ -672,6 +672,154 @@
 </div>
 
 <script>
+function escapeHTML(value){
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[char]));
+}
+
+function textToHTML(value){
+  return escapeHTML(value).replace(/\n/g,'<br>');
+}
+
+function setText(selector, value){
+  const el = document.querySelector(selector);
+  if (el && value !== undefined && value !== null) el.textContent = value;
+}
+
+function setHTML(selector, value){
+  const el = document.querySelector(selector);
+  if (el && value !== undefined && value !== null) el.innerHTML = textToHTML(value);
+}
+
+function setHref(selector, value){
+  const el = document.querySelector(selector);
+  if (el && value) el.href = value;
+}
+
+function setButtonLabel(selector, value){
+  const el = document.querySelector(selector);
+  if (!el || value === undefined || value === null) return;
+  const icon = el.querySelector('svg')?.outerHTML || '';
+  el.innerHTML = `${icon}${escapeHTML(value)}`;
+}
+
+function applyContent(data){
+  if (!data) return;
+
+  if (data.visibilidade) {
+    Object.entries(data.visibilidade).forEach(([key, visible]) => {
+      const section = document.getElementById(key);
+      if (section) section.style.display = visible ? '' : 'none';
+    });
+  }
+
+  if (data.hero) {
+    setText('.hero-eyebrow', data.hero.eyebrow);
+    const heroTitle = document.querySelector('.hero-title');
+    if (heroTitle) heroTitle.innerHTML = `${escapeHTML(data.hero.title1 || '')}<br><em>${escapeHTML(data.hero.title2 || '')}</em>`;
+    setText('.hero-body', data.hero.body);
+    setButtonLabel('.hero-cta', data.hero.cta_text);
+    setHref('.hero-cta', data.hero.cta_url);
+    const timesBar = document.querySelector('.hero-times-bar');
+    if (timesBar && Array.isArray(data.hero.times)) {
+      timesBar.innerHTML = data.hero.times.map(t =>
+        `<div class="hero-time"><div class="hero-time-label">${escapeHTML(t.label)}</div><div class="hero-time-value">${escapeHTML(t.value)}</div><div class="hero-time-unit">${escapeHTML(t.unit)}</div></div>`
+      ).join('');
+    }
+  }
+
+  if (Array.isArray(data.avisos)) {
+    const track = document.getElementById('cTrack');
+    if (track) {
+      track.innerHTML = data.avisos.map((a, index) =>
+        `<div class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}><span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
+      ).join('');
+    }
+  }
+
+  if (Array.isArray(data.horarios)) {
+    const grid = document.querySelector('.horarios-grid');
+    if (grid) {
+      grid.innerHTML = data.horarios.map(h =>
+        `<div class="horario-item"><div class="horario-dia">${escapeHTML(h.dia)}</div><div class="horario-hora">${escapeHTML(h.hora)}</div><div class="horario-nome">${escapeHTML(h.nome)}</div></div>`
+      ).join('');
+    }
+  }
+
+  if (data.transmissao) {
+    const iframe = document.querySelector('.youtube-embed iframe');
+    if (iframe && data.transmissao.yt_embed) iframe.src = data.transmissao.yt_embed;
+    setText('.youtube-desc', data.transmissao.yt_desc);
+    setButtonLabel('.yt-btn', data.transmissao.yt_btn_text);
+    setHref('.yt-btn', data.transmissao.yt_url);
+  }
+
+  if (Array.isArray(data.lideres)) {
+    const groups = document.querySelectorAll('.lideranca-grid > div');
+    const card = l => `<div class="lider-card"><img class="lider-avatar" src="${escapeHTML(l.photo || '')}" alt="${escapeHTML(l.nome)}"><div><div class="lider-nome">${escapeHTML(l.nome)}</div><div class="lider-cargo">${escapeHTML(l.cargo)}</div></div></div>`;
+    if (groups[0]) groups[0].innerHTML = '<div class="lideranca-grupo-titulo">Presbiteros Docentes</div>' + data.lideres.filter(l => l.grupo === 'docente').map(card).join('');
+    if (groups[1]) groups[1].innerHTML = '<div class="lideranca-grupo-titulo">Presbiteros Regentes e Diaconos</div>' + data.lideres.filter(l => l.grupo !== 'docente').map(card).join('');
+  }
+
+  if (Array.isArray(data.boletim)) {
+    const preview = document.querySelector('.boletim-preview-inner');
+    const footer = data.rodape?.endereco ? `<div style="margin-top:auto;text-align:center;padding-top:1rem;border-top:1px solid var(--border)"><div style="font-family:Crimson Pro,serif;font-style:italic;font-size:0.77rem;color:var(--text-muted)">${textToHTML(data.rodape.endereco)}</div></div>` : '';
+    if (preview) {
+      const header = preview.querySelector('.boletim-header')?.outerHTML || '';
+      preview.innerHTML = header + data.boletim.map(s =>
+        `<div class="boletim-sec"><div class="boletim-sec-title">${escapeHTML(s.title)}</div><div class="boletim-sec-body">${textToHTML(s.body)}</div></div>`
+      ).join('') + footer;
+    }
+  }
+
+  if (Array.isArray(data.conheca)) {
+    const grid = document.querySelector('.conheca-grid');
+    if (grid) {
+      grid.innerHTML = data.conheca.map(c =>
+        `<a href="${escapeHTML(c.url || '#')}" class="conheca-card"><div class="conheca-card-eyebrow">${escapeHTML(c.eyebrow)}</div><div class="conheca-card-title">${escapeHTML(c.title)}</div><div class="conheca-card-desc">${escapeHTML(c.desc)}</div><div class="conheca-arrow">Visitar &rarr;</div></a>`
+      ).join('');
+    }
+  }
+
+  if (data.contato) {
+    const values = document.querySelectorAll('.contato-item-value');
+    if (values[0]) values[0].innerHTML = textToHTML(data.contato.endereco);
+    if (values[1]) values[1].textContent = data.contato.whatsapp || '';
+    if (values[2]) values[2].textContent = data.contato.email || '';
+    if (values[3]) values[3].textContent = data.contato.horario || '';
+    setHref('.nav-cta', data.contato.maps);
+  }
+
+  if (data.rodape) {
+    setHTML('.footer-address', data.rodape.endereco);
+    setHref('.footer-socials a:nth-child(1)', data.rodape.instagram);
+    setHref('.footer-socials a:nth-child(2)', data.rodape.youtube);
+    setHref('.footer-socials a:nth-child(3)', data.rodape.facebook);
+    setText('.footer-soli', data.rodape.soli);
+    setText('.footer-bottom span:first-child', data.rodape.copyright);
+  }
+
+  window.IPAB_POPUPS = Array.isArray(data.avisos) ? data.avisos.map(a => a.popup || '') : [];
+  refreshCarouselCards();
+  setupDynamicPopups();
+}
+
+async function loadPublicContent(){
+  try {
+    const response = await fetch('/api/public-content', { cache: 'no-store' });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (payload.content) applyContent(payload.content);
+  } catch (error) {
+    // Keep the static page when the local backend is not running.
+  }
+}
+
 // MOBILE MENU
 document.getElementById("hamBtn").addEventListener("click",()=>{
   document.getElementById("mobileMenu").classList.toggle("open");
@@ -683,9 +831,10 @@ document.querySelectorAll(".mobile-menu a").forEach(a=>{
 // CAROUSEL
 let cIdx=0;
 const cTrack=document.getElementById("cTrack");
-const cCards=cTrack.querySelectorAll(".aviso-card");
+let cCards=cTrack.querySelectorAll(".aviso-card");
 function getVis(){const w=document.getElementById("cOuter").offsetWidth;return w<600?1:w<920?2:3;}
-function updateC(){const cw=cCards[0].offsetWidth+24;cTrack.style.transform="translateX(-"+(cIdx*cw)+"px)";}
+function refreshCarouselCards(){cCards=cTrack.querySelectorAll(".aviso-card");cIdx=0;updateC();}
+function updateC(){if(!cCards.length)return;const cw=cCards[0].offsetWidth+24;cTrack.style.transform="translateX(-"+(cIdx*cw)+"px)";}
 document.getElementById("cNext").addEventListener("click",()=>{if(cIdx+getVis()<cCards.length)cIdx++;updateC();});
 document.getElementById("cPrev").addEventListener("click",()=>{if(cIdx>0)cIdx--;updateC();});
 window.addEventListener("resize",()=>{cIdx=0;updateC();});
@@ -714,6 +863,22 @@ document.getElementById("modalClose").addEventListener("click", closeModal);
 backdrop.addEventListener("click",(e)=>{if(e.target===backdrop)closeModal();});
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeModal();});
 
+function setupDynamicPopups(){
+  document.querySelectorAll('.aviso-card[data-popup-idx]').forEach(card => {
+    const popupText = (window.IPAB_POPUPS || [])[Number(card.dataset.popupIdx)] || '';
+    if (!popupText) return;
+    const open = () => {
+      const lines = popupText.split('\n').filter(line => line.trim());
+      document.getElementById('modalTitle').textContent = lines[0] || card.querySelector('.aviso-title')?.textContent || 'Aviso';
+      const body = document.querySelector('.modal-body');
+      if (body) body.innerHTML = lines.slice(1).map(line => `<p>${escapeHTML(line)}</p>`).join('');
+      openModal();
+    };
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') open(); });
+  });
+}
+
 // CALENDAR
 const months=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const dnames=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
@@ -738,6 +903,7 @@ function renderCal(){
 document.getElementById("calPrev").addEventListener("click",()=>{calD.setMonth(calD.getMonth()-1);renderCal();});
 document.getElementById("calNext").addEventListener("click",()=>{calD.setMonth(calD.getMonth()+1);renderCal();});
 renderCal();
+loadPublicContent();
 </script>
 </body>
 </html>

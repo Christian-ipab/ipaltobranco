@@ -37,23 +37,35 @@ input:focus{border-color:#6b2535}
     <label>Senha de acesso</label>
     <input type="password" id="pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
   </div>
-  <button class="btn" onclick="login()">Entrar no painel</button>
+  <button class="btn" id="loginBtn" onclick="login()">Entrar no painel</button>
   <div class="error" id="err">Senha incorreta. Tente novamente.</div>
-  <a href="/" class="back">← Voltar ao site</a>
+  <a href="index.html" class="back">← Voltar ao site</a>
 </div>
 <script>
-function login(){
-  // SHA-256 hash of "ipab2026" — change this to your password
-  const HASH = 'a3b4c5d6e7f8901234567890abcdef1234567890abcdef1234567890abcdef12';
+async function login(){
   const pwd = document.getElementById('pwd').value;
-  // Simple check — for production use a proper auth service
-  if(pwd === 'ipab2026'){
-    sessionStorage.setItem('ipab_admin_auth','1');
-    window.location.href='/admin.html';
-  } else {
-    document.getElementById('err').style.display='block';
+  const err = document.getElementById('err');
+  const btn = document.getElementById('loginBtn');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+
+    if(!response.ok) throw new Error('invalid_login');
+    window.location.href='admin.html';
+  } catch (error) {
+    err.style.display='block';
     document.getElementById('pwd').value='';
     document.getElementById('pwd').focus();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar no painel';
   }
 }
 </script>

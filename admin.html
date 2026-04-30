@@ -159,6 +159,16 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .notice-info { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); color: #c4b5fd; }
 .notice-amber { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
 </style>
+<script>
+(function(){
+  fetch('/api/me')
+    .then(response => response.ok ? response.json() : { authenticated: false })
+    .then(user => {
+      if(!user.authenticated) window.location.replace('admin-login.html');
+    })
+    .catch(() => window.location.replace('admin-login.html'));
+})();
+</script>
 </head>
 <body>
 
@@ -178,6 +188,10 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
       <button class="btn btn-ghost" onclick="exportSite()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Exportar Site
+      </button>
+      <button class="btn btn-ghost" onclick="logoutAdmin()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
       </button>
     </div>
   </header>
@@ -503,6 +517,11 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 </div>
 
 <script>
+function logoutAdmin(){
+  fetch('/api/logout', { method: 'POST' })
+    .finally(() => window.location.href = 'admin-login.html');
+}
+
 // ═══════════════════════════════════════
 // DATA MODEL
 // ═══════════════════════════════════════
@@ -580,23 +599,57 @@ const DEFAULT_DATA = {
   }
 };
 
-// Load from localStorage or use defaults
 function loadData() {
-  try {
-    const saved = localStorage.getItem('ipab_data');
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
-function saveData(data) {
-  localStorage.setItem('ipab_data', JSON.stringify(data));
-  showStatus('Salvo com sucesso');
-  const ind = document.getElementById('saveIndicator');
-  ind.classList.add('show');
-  setTimeout(() => ind.classList.remove('show'), 2500);
+async function saveData(data) {
+  try {
+    const response = await fetch('/api/content', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: data })
+    });
+
+    if (response.status === 401) {
+      window.location.replace('admin-login.html');
+      return false;
+    }
+    if (!response.ok) throw new Error('content_save_failed');
+
+    showStatus('Salvo com sucesso');
+    const ind = document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    setTimeout(() => ind.classList.remove('show'), 2500);
+    return true;
+  } catch (error) {
+    showStatus('Erro ao salvar no servidor', false);
+    return false;
+  }
+}
+
+async function loadServerData() {
+  try {
+    const response = await fetch('/api/content');
+    if (response.status === 401) {
+      window.location.replace('admin-login.html');
+      return;
+    }
+    if (!response.ok) throw new Error('content_load_failed');
+
+    const payload = await response.json();
+    if (payload.content) {
+      DATA = payload.content;
+      renderPanel(document.querySelector('.nav-item.active').id.replace('nav-',''));
+    } else {
+      saveData(DATA);
+    }
+  } catch (error) {
+    showStatus('Usando dados padrao. Backend indisponivel.', true);
+  }
 }
 
 let DATA = loadData();
+loadServerData();
 let editingAvisoIdx = -1;
 let editingLiderIdx = -1;
 let tempLiderPhoto = '';
