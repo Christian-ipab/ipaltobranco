@@ -653,6 +653,7 @@ loadServerData();
 let editingAvisoIdx = -1;
 let editingLiderIdx = -1;
 let tempLiderPhoto = '';
+let autosaveTimer = null;
 
 // ═══════════════════════════════════════
 // NAVIGATION
@@ -697,7 +698,7 @@ function renderHero() {
     </div>`).join('');
 }
 
-function saveSection(sec) {
+function collectSection(sec) {
   if (sec === 'hero') {
     DATA.hero.title1 = document.getElementById('hero_title1').value;
     DATA.hero.title2 = document.getElementById('hero_title2').value;
@@ -730,6 +731,23 @@ function saveSection(sec) {
     DATA.rodape.soli = document.getElementById('rodape_soli').value;
     DATA.rodape.copyright = document.getElementById('rodape_copyright').value;
   }
+}
+
+function getActiveSection() {
+  const active = document.querySelector('.nav-item.active');
+  return active ? active.id.replace('nav-','') : 'hero';
+}
+
+function scheduleSave(sec = getActiveSection()) {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    collectSection(sec);
+    saveData(DATA);
+  }, 650);
+}
+
+function saveSection(sec) {
+  collectSection(sec);
   saveData(DATA);
 }
 
@@ -1163,6 +1181,14 @@ function resetData() {
 document.getElementById('avisoModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeAvisoModal(); });
 document.getElementById('liderModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeLiderModal(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape'){closeAvisoModal();closeLiderModal();} });
+document.addEventListener('input', e => {
+  if (!e.target.closest('.panel.active')) return;
+  scheduleSave();
+});
+document.addEventListener('change', e => {
+  if (!e.target.closest('.panel.active')) return;
+  scheduleSave();
+});
 
 // ═══════════════════════════════════════
 // SITE TEMPLATE (injected by server)
