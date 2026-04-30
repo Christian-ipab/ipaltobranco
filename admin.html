@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){
+  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (location.protocol === 'file:' || (isLocalHost && location.port && location.port !== '3000')) {
+    location.replace('http://localhost:3000/admin.html');
+  }
+})();
+</script>
 <title>IPAB Admin — Painel de Controle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -641,10 +649,10 @@ async function loadServerData() {
       DATA = payload.content;
       renderPanel(document.querySelector('.nav-item.active').id.replace('nav-',''));
     } else {
-      saveData(DATA);
+      await saveData(DATA);
     }
   } catch (error) {
-    showStatus('Usando dados padrao. Backend indisponivel.', true);
+    showStatus('Backend indisponivel. Abra pelo http://localhost:3000', false);
   }
 }
 

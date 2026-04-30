@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){
+  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (location.protocol === 'file:' || (isLocalHost && location.port && location.port !== '3000')) {
+    location.replace('http://localhost:3000/');
+  }
+})();
+</script>
 <title>IPAB – Igreja Presbiteriana do Alto Branco</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
