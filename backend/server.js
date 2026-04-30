@@ -47,7 +47,7 @@ async function writeContent(content) {
 
 app.post('/api/login', (req, res) => {
   const { password } = req.body || {};
-  if (password !== ADMIN_PASSWORD) {
+  if (String(password || '').trim() !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'invalid_credentials' });
   }
 

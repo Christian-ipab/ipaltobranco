@@ -43,7 +43,7 @@ input:focus{border-color:#6b2535}
 </div>
 <script>
 async function login(){
-  const pwd = document.getElementById('pwd').value;
+  const pwd = document.getElementById('pwd').value.trim();
   const err = document.getElementById('err');
   const btn = document.getElementById('loginBtn');
   err.style.display = 'none';
