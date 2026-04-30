@@ -96,12 +96,17 @@ app.put('/api/content', requireAdmin, async (req, res, next) => {
   }
 });
 
-app.get('/', (req, res) => res.sendFile(path.join(ROOT_DIR, 'index.html')));
+function sendNoStoreFile(res, filePath) {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(filePath);
+}
+
+app.get('/', (req, res) => sendNoStoreFile(res, path.join(ROOT_DIR, 'index.html')));
 app.get('/admin-login', (req, res) => res.redirect(302, '/admin-login.html'));
 app.get('/admin-logi', (req, res) => res.redirect(302, '/admin-login.html'));
 app.get('/admin', (req, res) => res.redirect(302, '/admin.html'));
-app.get('/admin-login.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'admin-login.html')));
-app.get('/admin.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'admin.html')));
+app.get('/admin-login.html', (req, res) => sendNoStoreFile(res, path.join(ROOT_DIR, 'admin-login.html')));
+app.get('/admin.html', (req, res) => sendNoStoreFile(res, path.join(ROOT_DIR, 'admin.html')));
 app.use(express.static(ROOT_DIR));
 
 app.use((error, req, res, next) => {

@@ -169,7 +169,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 </style>
 <script>
 (function(){
-  fetch('/api/me')
+  fetch('/api/me', { credentials: 'same-origin' })
     .then(response => response.ok ? response.json() : { authenticated: false })
     .then(user => {
       if(!user.authenticated) window.location.replace('admin-login.html');
@@ -611,18 +611,24 @@ function loadData() {
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
 async function saveData(data) {
+  showStatus('Salvando...', true);
   try {
     const response = await fetch('/api/content', {
       method: 'PUT',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: data })
     });
 
     if (response.status === 401) {
-      window.location.replace('admin-login.html');
+      showStatus('Sessao expirada. Entre novamente.', false);
+      setTimeout(() => window.location.replace('admin-login.html'), 1200);
       return false;
     }
-    if (!response.ok) throw new Error('content_save_failed');
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'content_save_failed');
+    }
 
     showStatus('Salvo com sucesso');
     const ind = document.getElementById('saveIndicator');
@@ -630,14 +636,15 @@ async function saveData(data) {
     setTimeout(() => ind.classList.remove('show'), 2500);
     return true;
   } catch (error) {
-    showStatus('Erro ao salvar no servidor', false);
+    console.error('Erro ao salvar no servidor:', error);
+    showStatus('Erro ao salvar. Verifique se esta em http://localhost:3000', false);
     return false;
   }
 }
 
 async function loadServerData() {
   try {
-    const response = await fetch('/api/content');
+    const response = await fetch('/api/content', { credentials: 'same-origin' });
     if (response.status === 401) {
       window.location.replace('admin-login.html');
       return;
