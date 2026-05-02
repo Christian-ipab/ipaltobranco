@@ -230,7 +230,14 @@
   .boletim-sec { margin-bottom: 1rem; }
   .boletim-sec-title { font-family: "Raleway", sans-serif; font-size: 0.56rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--burgundy); margin-bottom: 0.3rem; }
   .boletim-sec-body { font-family: "Crimson Pro", serif; font-size: 0.83rem; color: var(--text); line-height: 1.65; }
-  .boletim-badge { position: absolute; top: 1rem; right: 1rem; background: var(--burgundy); color: white; font-family: "Raleway", sans-serif; font-size: 0.54rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.22rem 0.55rem; border-radius: 1px; }
+  .boletim-badge { position: absolute; top: 1rem; right: 1rem; background: var(--burgundy); color: white; font-family: "Raleway", sans-serif; font-size: 0.54rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.22rem 0.55rem; border-radius: 1px; z-index: 2; }
+  .boletim-pdf-link { display: flex; flex-direction: column; width: 100%; height: 100%; color: inherit; text-decoration: none; }
+  .boletim-pdf-thumb { width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: top center; background: var(--cream); }
+  .boletim-pdf-info { border-top: 1px solid var(--border); padding: 1rem 1.15rem 1.15rem; background: var(--warm-white); }
+  .boletim-pdf-date { font-family: "Raleway", sans-serif; font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--burgundy); margin-bottom: 0.35rem; }
+  .boletim-pdf-title { font-family: "Libre Baskerville", serif; font-size: 1.05rem; color: var(--burgundy-deep); line-height: 1.35; }
+  .boletim-pdf-action { margin-top: 0.65rem; font-family: "Raleway", sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+  .boletim-placeholder { margin: auto; padding: 2rem; text-align: center; font-family: "Crimson Pro", serif; color: var(--text-muted); }
 
   .calendario { background: var(--warm-white); border: 1px solid var(--border); padding: 2rem; }
   .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
@@ -243,11 +250,12 @@
   .cal-day { font-family: "Crimson Pro", serif; font-size: 0.92rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0.2rem; border-radius: 2px; transition: background 0.2s; }
   .cal-day:hover { background: var(--burgundy-pale); }
   .cal-day.today { background: var(--burgundy); color: white; font-weight: 700; }
-  .cal-day.has-event { color: var(--burgundy-deep); font-weight: 600; position: relative; }
-  .cal-day.has-event::after { content:""; display:block; width:3px; height:3px; background:var(--burgundy); border-radius:50%; margin:2px auto 0; }
+  .cal-day.has-event, .cal-day.has-boletim { color: var(--burgundy-deep); font-weight: 600; position: relative; cursor: pointer; }
+  .cal-day.has-event::after, .cal-day.has-boletim::after { content:""; display:block; width:3px; height:3px; background:var(--burgundy); border-radius:50%; margin:2px auto 0; }
+  .cal-day.active-boletim { background: var(--burgundy-pale); color: var(--burgundy-deep); }
   .cal-day.empty { opacity:0; pointer-events:none; }
   .cal-eventos { margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.2rem; }
-  .cal-evento { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 0.8rem; }
+  .cal-evento { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 0.8rem; width: 100%; background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer; }
   .cal-evento-dia { font-family: "Libre Baskerville", serif; font-size: 1.4rem; font-weight: 700; color: var(--burgundy); line-height: 1; min-width: 2rem; text-align: center; }
   .cal-evento-nome { font-family: "Crimson Pro", serif; font-size: 0.95rem; color: var(--text); line-height: 1.3; }
   .cal-evento-hora { font-family: "Raleway", sans-serif; font-size: 0.58rem; letter-spacing: 0.1em; color: var(--burgundy); opacity: 0.75; text-transform: uppercase; }
@@ -575,11 +583,7 @@
             <div class="cal-nav"><button class="cal-nav-btn" id="calPrev">&#8249;</button><button class="cal-nav-btn" id="calNext">&#8250;</button></div>
           </div>
           <div class="cal-grid" id="calGrid"></div>
-          <div class="cal-eventos">
-            <div class="cal-evento"><div class="cal-evento-dia">6</div><div><div class="cal-evento-nome">Cultos Matutino e Vespertino</div><div class="cal-evento-hora">09:30 · 18:30</div></div></div>
-            <div class="cal-evento"><div class="cal-evento-dia">9</div><div><div class="cal-evento-nome">Reunião de Doutrina e Oração</div><div class="cal-evento-hora">20:00</div></div></div>
-            <div class="cal-evento"><div class="cal-evento-dia">13</div><div><div class="cal-evento-nome">Cultos Matutino e Vespertino</div><div class="cal-evento-hora">09:30 · 18:30</div></div></div>
-            <div class="cal-evento"><div class="cal-evento-dia">16</div><div><div class="cal-evento-nome">Reunião de Doutrina e Oração</div><div class="cal-evento-hora">20:00</div></div></div>
+          <div class="cal-eventos" id="boletimEventos"></div></div>
           </div>
         </div>
       </div>
@@ -819,6 +823,8 @@ function applyContent(data){
   }
 
   window.IPAB_POPUPS = Array.isArray(data.avisos) ? data.avisos.map(a => a.popup || '') : [];
+  if (typeof renderBoletimPreview === 'function') renderBoletimPreview();
+  if (typeof renderBoletimEvents === 'function') renderBoletimEvents();
   refreshCarouselCards();
   setupDynamicPopups();
 }
@@ -917,12 +923,75 @@ function setupDynamicPopups(){
 }
 setupDynamicPopups();
 
+const IPAB_BOLETINS = [
+  { date: '2026-01-04', id: '1hXTlWta6U6K_zUXqjZvDy_jIaNmIpDZk' },
+  { date: '2026-01-11', id: '1G7Ol_Y9eGrxYrhSWQH3QoA9Xr5DSetRL' },
+  { date: '2026-01-18', id: '1AiUsbF5HyLGwSbnXGpI5fvivP1uYmZGI' },
+  { date: '2026-01-25', id: '1TLEva_ODqD1Hfpg6chrF4_e9PWdZNIkc' },
+  { date: '2026-02-01', id: '1fDkp3XvkMaSVnGHtn450YCmUPRuOLAlN' },
+  { date: '2026-02-08', id: '14OnhV2ENSJGjORokFtrl9E4E9CHkP9F4' },
+  { date: '2026-02-22', id: '1Wj_YNHtewFX-5xMj0r8uaAtWIfXehRLb' },
+  { date: '2026-03-01', id: '1kBw1BPn-CLy-5FtrCvPf7WKXtSoTB-UE' },
+  { date: '2026-03-08', id: '1rhjoLWL6ngD5bNziAS7qN7KTCesncQ-M' },
+  { date: '2026-03-15', id: '1Xjg3hQF9JQ28QA2RXzlGv6xsJJdFtjGg' },
+  { date: '2026-03-22', id: '1QRJsT2o3fJnrrjPNScfP4pPfxQjh3Y3C' },
+  { date: '2026-03-29', id: '1NPuqBj9KSVpPvOstvP_1DvL0X3XTHRQc' },
+  { date: '2026-04-04', id: '1E0tA5cIbgRg64oE5nlQDSX3hLG8toWWp' },
+  { date: '2026-04-12', id: '1asDzA3U7dgvXzsyTBr8F7L5RjqZeFp0x' },
+  { date: '2026-04-19', id: '141_4PU1dcZhyKQjJHStCr2rJls25fWlv' },
+  { date: '2026-04-26', id: '150haEGsERmrFrE7jvUealpGwTtz3pskv' }
+];
+let activeBoletimId = IPAB_BOLETINS[IPAB_BOLETINS.length - 1]?.id || '';
+const boletimDateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+function boletimDate(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d);}
+function boletimPreviewUrl(id){return `https://drive.google.com/file/d/${id}/preview`;}
+function boletimThumbUrl(id){return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;}
+function activeBoletim(){return IPAB_BOLETINS.find(b=>b.id===activeBoletimId) || IPAB_BOLETINS[IPAB_BOLETINS.length-1];}
+function renderBoletimPreview(){
+  const preview = document.querySelector('.boletim-preview-inner');
+  const badge = document.querySelector('.boletim-badge');
+  const b = activeBoletim();
+  if (!preview || !b) return;
+  const d = boletimDate(b.date);
+  if (badge) badge.textContent = activeBoletimId === IPAB_BOLETINS[IPAB_BOLETINS.length - 1].id ? 'Mais recente' : 'Arquivo';
+  preview.innerHTML = `<a class="boletim-pdf-link" href="${boletimPreviewUrl(b.id)}" target="_blank" rel="noopener">
+    <img class="boletim-pdf-thumb" src="${boletimThumbUrl(b.id)}" alt="Pr\u00e9via do boletim de ${boletimDateFmt.format(d)}" loading="lazy">
+    <div class="boletim-pdf-info">
+      <div class="boletim-pdf-date">${boletimDateFmt.format(d)}</div>
+      <div class="boletim-pdf-title">Boletim Semanal</div>
+      <div class="boletim-pdf-action">Abrir PDF</div>
+    </div>
+  </a>`;
+}
+function renderBoletimEvents(){
+  const el = document.getElementById('boletimEventos');
+  if (!el) return;
+  const y = calD.getFullYear(), m = calD.getMonth();
+  const list = IPAB_BOLETINS.filter(b => {
+    const d = boletimDate(b.date);
+    return d.getFullYear() === y && d.getMonth() === m;
+  });
+  el.innerHTML = list.length ? list.map(b => {
+    const d = boletimDate(b.date);
+    return `<button class="cal-evento" type="button" data-boletim-id="${b.id}">
+      <div class="cal-evento-dia">${String(d.getDate()).padStart(2,'0')}</div>
+      <div><div class="cal-evento-nome">Boletim Semanal</div><div class="cal-evento-hora">PDF dispon\u00edvel</div></div>
+    </button>`;
+  }).join('') : '<div class="boletim-placeholder">Nenhum boletim em PDF para este m\u00eas.</div>';
+  el.querySelectorAll('[data-boletim-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeBoletimId = btn.dataset.boletimId;
+      renderBoletimPreview();
+      renderCal();
+    });
+  });
+}
+
 // CALENDAR
-const months=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const dnames=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const months=["Janeiro","Fevereiro","Mar\u00e7o","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const dnames=["Dom","Seg","Ter","Qua","Qui","Sex","S\u00e1b"];
 let calD=new Date(2026,3,1);
 const tod=new Date();
-const evs=[6,9,13,16,20,23,27,30];
 function renderCal(){
   const y=calD.getFullYear(),m=calD.getMonth();
   document.getElementById("calTitle").textContent=months[m]+" "+y;
@@ -933,13 +1002,28 @@ function renderCal(){
   const total=new Date(y,m+1,0).getDate();
   for(let d=1;d<=total;d++){
     const e=document.createElement("div");let c="cal-day";
+    const boletim = IPAB_BOLETINS.find(b => {
+      const bd = boletimDate(b.date);
+      return bd.getFullYear() === y && bd.getMonth() === m && bd.getDate() === d;
+    });
     if(d===tod.getDate()&&m===tod.getMonth()&&y===tod.getFullYear())c+=" today";
-    else if(evs.includes(d))c+=" has-event";
-    e.className=c;e.textContent=d;g.appendChild(e);
+    if(boletim)c+=" has-boletim";
+    if(boletim && boletim.id === activeBoletimId)c+=" active-boletim";
+    e.className=c;e.textContent=d;
+    if(boletim){
+      e.setAttribute('role','button');
+      e.setAttribute('tabindex','0');
+      const selectBoletim = () => { activeBoletimId = boletim.id; renderBoletimPreview(); renderCal(); };
+      e.addEventListener('click', selectBoletim);
+      e.addEventListener('keydown', ev => { if(ev.key === 'Enter' || ev.key === ' ') selectBoletim(); });
+    }
+    g.appendChild(e);
   }
+  renderBoletimEvents();
 }
 document.getElementById("calPrev").addEventListener("click",()=>{calD.setMonth(calD.getMonth()-1);renderCal();});
 document.getElementById("calNext").addEventListener("click",()=>{calD.setMonth(calD.getMonth()+1);renderCal();});
+renderBoletimPreview();
 renderCal();
 loadPublicContent();
 </script>
