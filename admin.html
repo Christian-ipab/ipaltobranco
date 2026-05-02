@@ -556,7 +556,7 @@ const DEFAULT_DATA = {
   },
   avisos: [
     { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
-    { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: '' },
+    { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: 'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45' },
     { tag: 'Pregações', title: 'Série Expositiva em I Coríntios', popup: '' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — A Igreja de Cristo', popup: '' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — Um Guia Seguro para o Céu', popup: '' },
@@ -1109,8 +1109,8 @@ function buildSiteHTML(d) {
     const realIdx = d.avisos.indexOf(a);
     const lines = a.popup.split('\n').filter(l => l.trim());
     const title = lines[0] || a.title;
-    const body = lines.slice(1).map(l => `<p>${esc(l)}</p>`).join('');
-    return `<div class="popup-modal" id="popup-${realIdx}"><div class="popup-box"><button class="popup-close" onclick="closePopup(${realIdx})">✕</button><div class="popup-eyebrow">Conselho da IPAB</div><h2 class="popup-title">${esc(title)}</h2><div class="popup-rule"></div><div class="popup-body">${body}</div></div></div>`;
+    const body = lines.slice(1).map(l => `<p>${linkifyPopupLine(l)}</p>`).join('');
+    return `<div class="popup-modal" id="popup-${realIdx}"><div class="popup-box"><button class="popup-close" onclick="closePopup(${realIdx})">✕</button><div class="popup-eyebrow">${esc(a.tag)}</div><h2 class="popup-title">${esc(title)}</h2><div class="popup-rule"></div><div class="popup-body">${body}</div></div></div>`;
   }).join(''));
 
   // Popup JS data
@@ -1171,6 +1171,14 @@ function buildSiteHTML(d) {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function linkifyPopupLine(line) {
+  const escaped = esc(line);
+  return escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener">$1</a>'
+  );
 }
 
 function showStatus(msg, success = true) {
@@ -1398,6 +1406,7 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   .popup-rule{width:44px;height:2px;background:var(--burgundy);opacity:.4;margin-bottom:1.5rem}
   .popup-body{font-family:"Crimson Pro",serif;font-size:1.08rem;color:var(--text);line-height:1.85}
   .popup-body p{margin-bottom:1.1rem}
+  .popup-body a{color:var(--burgundy);font-family:"Raleway",sans-serif;font-size:.78rem;font-weight:700;word-break:break-word}
   @media(max-width:900px){.nav-links{display:none}.nav-ham{display:flex}.youtube-wrapper,.lideranca-grid,.boletim-layout,.conheca-grid,.contato-grid,.footer-inner{grid-template-columns:1fr}.hero-times-bar{flex-wrap:wrap}.hero-time{flex:1 1 50%;border-right:none;border-bottom:1px solid rgba(255,255,255,.07)}.hero-time:nth-child(odd){border-right:1px solid rgba(255,255,255,.07)}.aviso-card{flex:0 0 100%}}
 </style>
 </head>

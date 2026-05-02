@@ -384,6 +384,7 @@
   }
   .modal-body p { margin-bottom: 1.1rem; }
   .modal-body p:last-child { margin-bottom: 0; }
+  .modal-body a { color: var(--burgundy); font-family: "Raleway", sans-serif; font-size: 0.78rem; font-weight: 700; word-break: break-word; }
   .modal-body strong {
     font-weight: 600; color: var(--burgundy-deep);
     font-family: "Libre Baskerville", serif; font-size: 1rem;
@@ -465,7 +466,7 @@
     <div class="carousel-outer" id="cOuter">
       <div class="carousel-track" id="cTrack">
         <div class="aviso-card"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
-        <div class="aviso-card"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div></div>
+        <div class="aviso-card clickable" data-popup-idx="1" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em I Coríntios</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — A Igreja de Cristo</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — Um Guia Seguro para o Céu</div></div>
@@ -693,6 +694,13 @@ function textToHTML(value){
   return escapeHTML(value).replace(/\n/g,'<br>');
 }
 
+function linkifyPopupLine(line){
+  return escapeHTML(line).replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener">$1</a>'
+  );
+}
+
 function setText(selector, value){
   const el = document.querySelector(selector);
   if (el && value !== undefined && value !== null) el.textContent = value;
@@ -848,6 +856,20 @@ window.addEventListener("resize",()=>{cIdx=0;updateC();});
 
 // MODAL
 const backdrop = document.getElementById("modalBackdrop");
+const modalEyebrow = document.querySelector(".modal-eyebrow");
+const modalTitle = document.getElementById("modalTitle");
+const modalBody = document.querySelector(".modal-body");
+const modalFooter = document.querySelector(".modal-footer");
+const assemblyModal = {
+  eyebrow: modalEyebrow ? modalEyebrow.textContent : '',
+  title: modalTitle.textContent,
+  body: modalBody ? modalBody.innerHTML : '',
+  footer: modalFooter ? modalFooter.textContent : ''
+};
+window.IPAB_POPUPS = [
+  '',
+  'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45'
+];
 const firstCard = document.querySelector(".aviso-card");
 firstCard.classList.add("clickable");
 firstCard.setAttribute("role","button");
@@ -863,9 +885,16 @@ firstCard.addEventListener("mouseleave",()=>hint.style.gap="0.4rem");
 
 function openModal(){backdrop.classList.add("open"); document.body.style.overflow="hidden";}
 function closeModal(){backdrop.classList.remove("open"); document.body.style.overflow="";}
+function openAssemblyModal(){
+  if (modalEyebrow) modalEyebrow.textContent = assemblyModal.eyebrow;
+  modalTitle.textContent = assemblyModal.title;
+  if (modalBody) modalBody.innerHTML = assemblyModal.body;
+  if (modalFooter) modalFooter.textContent = assemblyModal.footer;
+  openModal();
+}
 
-firstCard.addEventListener("click", openModal);
-firstCard.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openModal();});
+firstCard.addEventListener("click", openAssemblyModal);
+firstCard.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openAssemblyModal();});
 document.getElementById("modalClose").addEventListener("click", closeModal);
 backdrop.addEventListener("click",(e)=>{if(e.target===backdrop)closeModal();});
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeModal();});
@@ -876,15 +905,17 @@ function setupDynamicPopups(){
     if (!popupText) return;
     const open = () => {
       const lines = popupText.split('\n').filter(line => line.trim());
-      document.getElementById('modalTitle').textContent = lines[0] || card.querySelector('.aviso-title')?.textContent || 'Aviso';
-      const body = document.querySelector('.modal-body');
-      if (body) body.innerHTML = lines.slice(1).map(line => `<p>${escapeHTML(line)}</p>`).join('');
+      if (modalEyebrow) modalEyebrow.textContent = card.querySelector('.aviso-tag')?.textContent || 'Aviso';
+      modalTitle.textContent = lines[0] || card.querySelector('.aviso-title')?.textContent || 'Aviso';
+      if (modalBody) modalBody.innerHTML = lines.slice(1).map(line => `<p>${linkifyPopupLine(line)}</p>`).join('');
+      if (modalFooter) modalFooter.textContent = '';
       openModal();
     };
     card.addEventListener('click', open);
     card.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') open(); });
   });
 }
+setupDynamicPopups();
 
 // CALENDAR
 const months=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
