@@ -356,7 +356,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
         </div>
         <div class="field">
           <label>Embed URL do iframe</label>
-          <input type="url" id="yt_embed" placeholder="https://www.youtube.com/embed/live_stream?channel=...">
+          <input type="url" id="yt_embed" placeholder="https://www.youtube.com/embed/videoseries?list=...">
         </div>
         <div class="field">
           <label>Texto descritivo</label>
@@ -572,7 +572,7 @@ const DEFAULT_DATA = {
   ],
   transmissao: {
     yt_url: 'https://www.youtube.com/channel/UCRRL38Mk1LauwdbKkuDCjAA',
-    yt_embed: 'https://www.youtube.com/embed/live_stream?channel=UCRRL38Mk1LauwdbKkuDCjAA&autoplay=0',
+    yt_embed: 'https://www.youtube.com/embed/videoseries?si=1h8LzhbkTFiYGmYn&list=PL9Y3q8-GNYnNiQTXKP8c42mC79EhV743P',
     yt_desc: 'Acompanhe nossos cultos e estudos bíblicos pelo YouTube. Todas as pregações ficam disponíveis no canal para assistir a qualquer hora.',
     yt_btn_text: 'Assistir no YouTube'
   },
@@ -1459,7 +1459,7 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
 </div></section>
 <section id="transmissao"><div class="container">
   <div class="youtube-wrapper">
-    <div class="youtube-embed"><iframe src="%%YT_EMBED%%" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen title="IPAB ao vivo"></iframe></div>
+    <div class="youtube-embed"><iframe src="%%YT_EMBED%%" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="Transmissões IPAB"></iframe></div>
     <div>
       <div class="section-eyebrow">Online</div>
       <h2 class="section-title">Transmissão <em>Ao Vivo</em></h2>
