@@ -614,8 +614,7 @@
     <div class="contato-grid">
       <div>
         <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="contato-item-label">Endereço</div><div class="contato-item-value">R. Nossa Sra. de Lourdes, 829<br>Jardim Tavares — Campina Grande, PB<br>CEP 58.402-045</div></div></div>
-        <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .82h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg></div><div><div class="contato-item-label">WhatsApp</div><div class="contato-item-value">(83) 98891-****</div></div></div>
-        <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="contato-item-label">E-mail</div><div class="contato-item-value">contato@ipaltobranco.org</div></div></div>
+        <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="contato-item-label">E-mail</div><div class="contato-item-value">ipaltobranco@gmail.com</div></div></div>
         <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="contato-item-label">Secretaria</div><div class="contato-item-value">Ter a Sex: 8h–12h · 14h–17h</div></div></div>
       </div>
       <form class="contato-form" data-webhook="https://hook.us2.make.com/ep7rv5utk09crfnfikuelogcf8a7o7me">
@@ -809,9 +808,8 @@ function applyContent(data){
   if (data.contato) {
     const values = document.querySelectorAll('.contato-item-value');
     if (values[0]) values[0].innerHTML = textToHTML(data.contato.endereco);
-    if (values[1]) values[1].textContent = data.contato.whatsapp || '';
-    if (values[2]) values[2].textContent = data.contato.email || '';
-    if (values[3]) values[3].textContent = data.contato.horario || '';
+    if (values[1]) values[1].textContent = data.contato.email || '';
+    if (values[2]) values[2].textContent = data.contato.horario || '';
     setHref('.nav-cta', data.contato.maps);
   }
 

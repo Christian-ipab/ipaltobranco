@@ -419,10 +419,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
       <div class="card">
         <div class="card-title">Informações de contato</div>
         <div class="field"><label>Endereço completo</label><textarea id="contato_endereco" rows="3"></textarea></div>
-        <div class="field-row col2">
-          <div class="field"><label>WhatsApp</label><input type="tel" id="contato_whatsapp"></div>
-          <div class="field"><label>E-mail</label><input type="email" id="contato_email"></div>
-        </div>
+        <div class="field"><label>E-mail</label><input type="email" id="contato_email"></div>
         <div class="field"><label>Horário da secretaria</label><input type="text" id="contato_horario"></div>
         <div class="field"><label>Link do Google Maps (botão "Planeje sua visita")</label><input type="url" id="contato_maps"></div>
         <div class="field"><label>Webhook do formulário</label><input type="url" id="contato_webhook"></div>
@@ -594,8 +591,8 @@ const DEFAULT_DATA = {
   ],
   contato: {
     endereco: 'R. Nossa Sra. de Lourdes, 829\nJardim Tavares — Campina Grande, PB\nCEP 58.402-045',
-    whatsapp: '(83) 98891-****',
-    email: 'contato@ipaltobranco.org',
+    whatsapp: '',
+    email: 'ipaltobranco@gmail.com',
     horario: 'Ter a Sex: 8h–12h · 14h–17h',
     maps: 'https://share.google/82FmH44K8gPxVRrL9',
     webhook: 'https://hook.us2.make.com/ep7rv5utk09crfnfikuelogcf8a7o7me'
@@ -604,7 +601,7 @@ const DEFAULT_DATA = {
     instagram: 'https://www.instagram.com/ipaltobranco',
     youtube: 'https://www.youtube.com/channel/UCRRL38Mk1LauwdbKkuDCjAA',
     facebook: 'https://www.facebook.com/ipaltobranco',
-    endereco: 'R. Nossa Sra. de Lourdes, 829\nJardim Tavares, Campina Grande – PB\nCEP 58.402-045',
+    endereco: 'R. Nossa Sra. de Lourdes, 829\nJardim Tavares — Campina Grande, PB\nCEP 58.402-045',
     soli: 'Soli Deo Gloria',
     copyright: '© 2026 Igreja Presbiteriana do Alto Branco. Todos os direitos reservados.'
   },
@@ -741,7 +738,7 @@ function collectSection(sec) {
   }
   if (sec === 'contato') {
     DATA.contato.endereco = document.getElementById('contato_endereco').value;
-    DATA.contato.whatsapp = document.getElementById('contato_whatsapp').value;
+    DATA.contato.whatsapp = '';
     DATA.contato.email = document.getElementById('contato_email').value;
     DATA.contato.horario = document.getElementById('contato_horario').value;
     DATA.contato.maps = document.getElementById('contato_maps').value;
@@ -1018,7 +1015,6 @@ function deleteConheca(i) {
 function renderContato() {
   const c = DATA.contato;
   document.getElementById('contato_endereco').value = c.endereco;
-  document.getElementById('contato_whatsapp').value = c.whatsapp;
   document.getElementById('contato_email').value = c.email;
   document.getElementById('contato_horario').value = c.horario;
   document.getElementById('contato_maps').value = c.maps;
@@ -1153,7 +1149,6 @@ function buildSiteHTML(d) {
 
   // Contato
   html = html.replace('%%CONTATO_ENDERECO%%', esc(d.contato.endereco).replace(/\n/g,'<br>'));
-  html = html.replace('%%CONTATO_WHATSAPP%%', esc(d.contato.whatsapp));
   html = html.replace('%%CONTATO_EMAIL%%', esc(d.contato.email));
   html = html.replace('%%CONTATO_HORARIO%%', esc(d.contato.horario));
   html = html.replace('%%HERO_CTA_URL2%%', esc(d.contato.maps));
@@ -1513,7 +1508,6 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   <div class="contato-grid">
     <div>
       <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="contato-item-label">Endereço</div><div class="contato-item-value">%%CONTATO_ENDERECO%%</div></div></div>
-      <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .82h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg></div><div><div class="contato-item-label">WhatsApp</div><div class="contato-item-value">%%CONTATO_WHATSAPP%%</div></div></div>
       <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="contato-item-label">E-mail</div><div class="contato-item-value">%%CONTATO_EMAIL%%</div></div></div>
       <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="contato-item-label">Secretaria</div><div class="contato-item-value">%%CONTATO_HORARIO%%</div></div></div>
     </div>
