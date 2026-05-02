@@ -425,6 +425,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
         </div>
         <div class="field"><label>Horário da secretaria</label><input type="text" id="contato_horario"></div>
         <div class="field"><label>Link do Google Maps (botão "Planeje sua visita")</label><input type="url" id="contato_maps"></div>
+        <div class="field"><label>Webhook do formulário</label><input type="url" id="contato_webhook"></div>
       </div>
     </div>
 
@@ -546,7 +547,7 @@ const DEFAULT_DATA = {
     eyebrow: 'Campina Grande · Paraíba',
     body: 'Nos reunimos às 9:30 e às 18:30 para atender à graciosa Santa Convocação de Nosso Senhor. Um momento de adoração sincera, edificação na Palavra e nos Sacramentos e também de comunhão. Venha nos conhecer!',
     cta_text: 'Planeje Sua Visita',
-    cta_url: 'https://share.google/Pl29iK444PpCuLNq7',
+    cta_url: 'https://share.google/82FmH44K8gPxVRrL9',
     times: [
       { label: 'Culto Matutino', value: '9:30', unit: 'domingo' },
       { label: 'Escola Bíblica Dominical', value: '11:30', unit: 'domingo' },
@@ -592,17 +593,18 @@ const DEFAULT_DATA = {
     { eyebrow: 'Igreja', title: 'Igreja Presbiteriana Litorânea', desc: 'Uma comunidade reformada comprometida com a Palavra de Deus e a sã doutrina presbiteriana.', url: 'https://www.instagram.com/ip_litoranea/' },
   ],
   contato: {
-    endereco: 'Av. Manoel Tavares, 875\nAlto Branco — Campina Grande, PB\nCEP 58.401-490',
+    endereco: 'R. Nossa Sra. de Lourdes, 829\nJardim Tavares — Campina Grande, PB\nCEP 58.402-045',
     whatsapp: '(83) 98891-****',
     email: 'contato@ipaltobranco.org',
     horario: 'Ter a Sex: 8h–12h · 14h–17h',
-    maps: 'https://share.google/Pl29iK444PpCuLNq7'
+    maps: 'https://share.google/82FmH44K8gPxVRrL9',
+    webhook: 'https://hook.us2.make.com/ep7rv5utk09crfnfikuelogcf8a7o7me'
   },
   rodape: {
     instagram: 'https://www.instagram.com/ipaltobranco',
     youtube: 'https://www.youtube.com/channel/UCRRL38Mk1LauwdbKkuDCjAA',
     facebook: 'https://www.facebook.com/ipaltobranco',
-    endereco: 'Av. Manoel Tavares, 875\nAlto Branco, Campina Grande – PB\nCEP 58.401-490',
+    endereco: 'R. Nossa Sra. de Lourdes, 829\nJardim Tavares, Campina Grande – PB\nCEP 58.402-045',
     soli: 'Soli Deo Gloria',
     copyright: '© 2026 Igreja Presbiteriana do Alto Branco. Todos os direitos reservados.'
   },
@@ -743,6 +745,7 @@ function collectSection(sec) {
     DATA.contato.email = document.getElementById('contato_email').value;
     DATA.contato.horario = document.getElementById('contato_horario').value;
     DATA.contato.maps = document.getElementById('contato_maps').value;
+    DATA.contato.webhook = document.getElementById('contato_webhook').value;
   }
   if (sec === 'rodape') {
     DATA.rodape.instagram = document.getElementById('rodape_instagram').value;
@@ -1019,6 +1022,7 @@ function renderContato() {
   document.getElementById('contato_email').value = c.email;
   document.getElementById('contato_horario').value = c.horario;
   document.getElementById('contato_maps').value = c.maps;
+  document.getElementById('contato_webhook').value = c.webhook || '';
 }
 
 // ═══════════════════════════════════════
@@ -1153,6 +1157,7 @@ function buildSiteHTML(d) {
   html = html.replace('%%CONTATO_EMAIL%%', esc(d.contato.email));
   html = html.replace('%%CONTATO_HORARIO%%', esc(d.contato.horario));
   html = html.replace('%%HERO_CTA_URL2%%', esc(d.contato.maps));
+  html = html.replace('%%CONTATO_WEBHOOK%%', esc(d.contato.webhook || ''));
 
   // Rodapé
   html = html.replace('%%RODAPE_INSTAGRAM%%', esc(d.rodape.instagram));
@@ -1378,7 +1383,7 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   .form-input:focus,.form-textarea:focus{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.09)}
   .form-textarea{resize:vertical;min-height:110px}
   .form-submit{font-family:"Raleway",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--burgundy-deep);background:white;border:none;padding:1rem 2rem;cursor:pointer;transition:background .2s;border-radius:2px;align-self:flex-start}
-  .form-submit:hover{background:var(--cream)}
+  .form-submit:hover{background:var(--cream)}.form-status{min-height:1.2rem;font-family:"Raleway",sans-serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.58)}
   footer{background:#280c15;color:rgba(255,255,255,.35);padding:4rem 2rem 2rem;border-top:1px solid rgba(255,255,255,.05)}
   .footer-inner{max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
   .footer-logo-img{width:60px;height:60px;object-fit:contain;margin-bottom:1rem}
@@ -1512,12 +1517,12 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
       <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="contato-item-label">E-mail</div><div class="contato-item-value">%%CONTATO_EMAIL%%</div></div></div>
       <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="contato-item-label">Secretaria</div><div class="contato-item-value">%%CONTATO_HORARIO%%</div></div></div>
     </div>
-    <form class="contato-form" onsubmit="return false">
-      <div class="form-group"><label class="form-label">Seu nome</label><input class="form-input" type="text" placeholder="Nome completo"></div>
-      <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" placeholder="seu@email.com"></div>
-      <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" type="tel" placeholder="(83) 00000-0000"></div>
-      <div class="form-group"><label class="form-label">Mensagem</label><textarea class="form-textarea" placeholder="Como podemos ajudá-lo?"></textarea></div>
-      <button class="form-submit">Enviar mensagem</button>
+    <form class="contato-form" data-webhook="%%CONTATO_WEBHOOK%%">
+      <div class="form-group"><label class="form-label">Seu nome</label><input class="form-input" type="text" name="nome" placeholder="Nome completo" required></div>
+      <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" name="email" placeholder="seu@email.com" required></div>
+      <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" type="tel" name="telefone" placeholder="(83) 00000-0000"></div>
+      <div class="form-group"><label class="form-label">Mensagem</label><textarea class="form-textarea" name="mensagem" placeholder="Como podemos ajudar?" required></textarea></div>
+      <button class="form-submit" type="submit">Enviar mensagem</button><div class="form-status" aria-live="polite"></div>
     </form>
   </div>
 </div></section>
@@ -1549,7 +1554,8 @@ document.getElementById("cNext").addEventListener("click",()=>{if(cIdx+getVis()<
 document.getElementById("cPrev").addEventListener("click",()=>{if(cIdx>0)cIdx--;updateC();});
 window.addEventListener("resize",()=>{cIdx=0;updateC();});
 const popupData=%%POPUP_DATA%%;
-document.querySelectorAll(".aviso-card.clickable").forEach(card=>{
+function setupContactForm(){const form=document.querySelector('.contato-form');if(!form)return;const status=form.querySelector('.form-status');const submit=form.querySelector('.form-submit');form.addEventListener('submit',async function(event){event.preventDefault();const webhook=form.dataset.webhook;if(!webhook)return;if(status)status.textContent='Enviando...';if(submit)submit.disabled=true;const payload=new FormData(form);payload.append('origem','site-ipab');payload.append('pagina',window.location.href);payload.append('enviado_em',new Date().toISOString());try{await fetch(webhook,{method:'POST',mode:'no-cors',body:payload});form.reset();if(status)status.textContent='Mensagem enviada.';}catch(error){if(status)status.textContent='Nao foi possivel enviar. Tente novamente.';}finally{if(submit)submit.disabled=false;}});}
+setupContactForm();document.querySelectorAll(".aviso-card.clickable").forEach(card=>{
   const idx=parseInt(card.dataset.popupIdx);
   card.addEventListener("click",()=>openPopup(idx));
 });
