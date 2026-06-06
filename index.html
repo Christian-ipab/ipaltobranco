@@ -276,6 +276,7 @@
   .carousel-outer { overflow: hidden; }
   .carousel-track { display: flex; gap: 1.5rem; transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94); }
   .aviso-card { flex: 0 0 calc(33.333% - 1rem); min-width: 280px; background: var(--warm-white); border: 1px solid var(--border); border-top: 3px solid var(--burgundy); padding: 2rem 1.8rem; transition: transform 0.3s, box-shadow 0.3s; }
+  .aviso-image { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; margin: -0.5rem 0 1.25rem; border: 1px solid var(--border); background: var(--cream); }
   .aviso-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(107,37,53,0.12); }
   .aviso-tag { font-family: "Raleway", sans-serif; font-size: 0.57rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--burgundy); background: var(--burgundy-pale); padding: 0.22rem 0.55rem; display: inline-block; margin-bottom: 0.9rem; border-radius: 1px; }
   .aviso-title { font-family: "Libre Baskerville", serif; font-size: 1.1rem; font-weight: 400; color: var(--burgundy-deep); line-height: 1.5; }
@@ -572,6 +573,7 @@
     <div class="carousel-outer" id="cOuter">
       <div class="carousel-track" id="cTrack">
         <div class="aviso-card"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
+        <div class="aviso-card"><img class="aviso-image" src="assets/avisos/confessionalidade-reformada-bradley.jpeg" alt="Confessionalidade Reformada com Pr. Bradley Arakelian"><span class="aviso-tag">Cultos Especiais</span><div class="aviso-title">Confessionalidade Reformada — Pr. Bradley Arakelian</div></div>
         <div class="aviso-card clickable" data-popup-idx="1" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card clickable" data-popup-idx="2" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em I Coríntios</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — A Igreja de Cristo</div></div>
@@ -853,7 +855,7 @@ function applyContent(data){
     const track = document.getElementById('cTrack');
     if (track) {
       track.innerHTML = data.avisos.map((a, index) =>
-        `<div class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}><span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
+        `<div class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}>${a.image ? `<img class="aviso-image" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.title)}">` : ''}<span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
       ).join('');
     }
   }

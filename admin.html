@@ -476,6 +476,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     </div>
     <div class="field"><label>Tag / Categoria</label><input type="text" id="aviso_tag" placeholder="EBD, Pregações, Família..."></div>
     <div class="field"><label>Título do aviso</label><input type="text" id="aviso_title"></div>
+    <div class="field"><label>Imagem do aviso (opcional)</label><input type="text" id="aviso_image" placeholder="assets/avisos/arquivo.jpeg"></div>
     <div class="field">
       <label>Texto do pop-up (opcional — deixe em branco para sem pop-up)</label>
       <textarea id="aviso_popup" rows="8" placeholder="Se preenchido, um clique no card abrirá este texto em um pop-up."></textarea>
@@ -554,6 +555,7 @@ const DEFAULT_DATA = {
   },
   avisos: [
     { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
+    { tag: 'Cultos Especiais', title: 'Confessionalidade Reformada — Pr. Bradley Arakelian', image: 'assets/avisos/confessionalidade-reformada-bradley.jpeg', popup: '' },
     { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: 'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45' },
     { tag: 'Pregações', title: 'Série Expositiva em I Coríntios', popup: 'Série Expositiva em I Coríntios\n\nAcompanhe a playlist com as pregações da série expositiva em I Coríntios.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPop0GHGBin5qUVT45K4H_V' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — A Igreja de Cristo', popup: '' },
@@ -784,7 +786,7 @@ function renderAvisos() {
       <div class="list-item-drag">⠿</div>
       <div class="list-item-body">
         <div class="list-item-title"><span class="tag-pill">${esc(a.tag)}</span>${esc(a.title)}</div>
-        ${a.popup ? '<div class="list-item-meta">✦ tem pop-up</div>' : ''}
+        ${a.popup ? '<div class="list-item-meta">✦ tem pop-up</div>' : ''}${a.image ? '<div class="list-item-meta">✦ tem imagem</div>' : ''}
       </div>
       <div class="list-item-actions">
         <button class="btn btn-ghost btn-sm" onclick="openAvisoModal(${i})">Editar</button>
@@ -800,10 +802,12 @@ function openAvisoModal(idx) {
   if (idx >= 0) {
     document.getElementById('aviso_tag').value = DATA.avisos[idx].tag;
     document.getElementById('aviso_title').value = DATA.avisos[idx].title;
+    document.getElementById('aviso_image').value = DATA.avisos[idx].image || '';
     document.getElementById('aviso_popup').value = DATA.avisos[idx].popup || '';
   } else {
     document.getElementById('aviso_tag').value = '';
     document.getElementById('aviso_title').value = '';
+    document.getElementById('aviso_image').value = '';
     document.getElementById('aviso_popup').value = '';
   }
   modal.classList.add('open');
@@ -813,6 +817,7 @@ function saveAviso() {
   const item = {
     tag: document.getElementById('aviso_tag').value,
     title: document.getElementById('aviso_title').value,
+    image: document.getElementById('aviso_image').value,
     popup: document.getElementById('aviso_popup').value
   };
   if (editingAvisoIdx === -1) DATA.avisos.push(item);
@@ -1101,7 +1106,7 @@ function buildSiteHTML(d) {
 
   // Avisos
   html = html.replace('%%AVISOS%%', d.avisos.map((a, i) =>
-    `<div class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}><span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`
+    `<div class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}>${a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : ''}<span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`
   ).join(''));
 
   // Popup modals
@@ -1381,6 +1386,7 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   .carousel-outer{overflow:hidden}
   .carousel-track{display:flex;gap:1.5rem;transition:transform .45s cubic-bezier(.25,.46,.45,.94)}
   .aviso-card{flex:0 0 calc(33.333% - 1rem);min-width:280px;background:var(--warm-white);border:1px solid var(--border);border-top:3px solid var(--burgundy);padding:2rem 1.8rem;transition:transform .3s,box-shadow .3s}
+  .aviso-image{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;margin:-.5rem 0 1.25rem;border:1px solid var(--border);background:var(--cream)}
   .aviso-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(107,37,53,.12)}
   .aviso-card.clickable{cursor:pointer}
   .aviso-card.clickable:hover .aviso-title{color:var(--burgundy)}
