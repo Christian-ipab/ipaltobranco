@@ -11,6 +11,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const N8N_CONTACT_WEBHOOK_URL = String(process.env.N8N_CONTACT_WEBHOOK_URL || '').trim();
 
 const SESSION_SECRET = process.env.SESSION_SECRET || (IS_PRODUCTION ? null : 'ipab-dev-session-secret');
 if (!SESSION_SECRET) {
@@ -44,6 +45,37 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'too_many_attempts' }
 });
+
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too_many_contact_attempts' }
+});
+
+function cleanText(value, maxLength) {
+  return String(value || '').trim().slice(0, maxLength);
+}
+
+async function postToN8n(url, payload) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`n8n webhook failed with status ${response.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 app.post('/api/login', loginLimiter, async (req, res, next) => {
   try {
@@ -88,6 +120,38 @@ app.get('/api/public-content', (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
     res.json({ content: readContent() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/contact', contactLimiter, async (req, res, next) => {
+  try {
+    if (!N8N_CONTACT_WEBHOOK_URL) {
+      return res.status(503).json({ error: 'contact_webhook_not_configured' });
+    }
+
+    const contact = {
+      nome: cleanText(req.body?.nome, 120),
+      email: cleanText(req.body?.email, 180),
+      telefone: cleanText(req.body?.telefone, 60),
+      mensagem: cleanText(req.body?.mensagem, 3000)
+    };
+
+    if (!contact.nome || !contact.email || !contact.mensagem) {
+      return res.status(400).json({ error: 'invalid_contact' });
+    }
+
+    await postToN8n(N8N_CONTACT_WEBHOOK_URL, {
+      ...contact,
+      origem: 'site-ipab',
+      pagina: cleanText(req.body?.pagina, 500),
+      enviado_em: new Date().toISOString(),
+      ip: req.ip,
+      user_agent: cleanText(req.get('user-agent'), 300)
+    });
+
+    res.json({ ok: true });
   } catch (error) {
     next(error);
   }

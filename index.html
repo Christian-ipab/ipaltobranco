@@ -714,7 +714,7 @@
         <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="contato-item-label">E-mail</div><div class="contato-item-value">ipaltobranco@gmail.com</div></div></div>
         <div class="contato-item"><div class="contato-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="contato-item-label">Secretaria</div><div class="contato-item-value">Ter a Sex: 8h–12h · 14h–17h</div></div></div>
       </div>
-      <form class="contato-form" data-webhook="https://hook.us2.make.com/ep7rv5utk09crfnfikuelogcf8a7o7me">
+      <form class="contato-form" data-webhook="/api/contact">
         <div class="form-group"><label class="form-label">Seu nome</label><input class="form-input" type="text" name="nome" placeholder="Nome completo" required></div>
         <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" name="email" placeholder="seu@email.com" required></div>
         <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" type="tel" name="telefone" placeholder="(83) 00000-0000"></div>
@@ -907,6 +907,8 @@ function applyContent(data){
     if (values[0]) values[0].innerHTML = textToHTML(data.contato.endereco);
     if (values[1]) values[1].textContent = data.contato.email || '';
     if (values[2]) values[2].textContent = data.contato.horario || '';
+    const contactForm = document.querySelector('.contato-form');
+    if (contactForm) contactForm.dataset.webhook = data.contato.webhook?.startsWith('/') ? data.contato.webhook : '/api/contact';
     setHref('.nav-cta', data.contato.maps);
   }
 
@@ -949,12 +951,17 @@ function setupContactForm(){
     if (!webhook) return;
     if (status) status.textContent = 'Enviando...';
     if (submit) submit.disabled = true;
-    const payload = new FormData(form);
-    payload.append('origem', 'site-ipab');
-    payload.append('pagina', window.location.href);
-    payload.append('enviado_em', new Date().toISOString());
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.pagina = window.location.href;
     try {
-      await fetch(webhook, { method: 'POST', mode: 'no-cors', body: payload });
+      const isInternal = webhook.startsWith('/');
+      const response = await fetch(webhook, {
+        method: 'POST',
+        headers: isInternal ? { 'Content-Type': 'application/json' } : undefined,
+        body: isInternal ? JSON.stringify(payload) : new FormData(form),
+        mode: isInternal ? 'same-origin' : 'no-cors'
+      });
+      if (isInternal && !response.ok) throw new Error('contact_failed');
       form.reset();
       if (status) status.textContent = 'Mensagem enviada.';
     } catch (error) {

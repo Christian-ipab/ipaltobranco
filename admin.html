@@ -422,7 +422,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
         <div class="field"><label>E-mail</label><input type="email" id="contato_email"></div>
         <div class="field"><label>Horário da secretaria</label><input type="text" id="contato_horario"></div>
         <div class="field"><label>Link do Google Maps (botão "Planeje sua visita")</label><input type="url" id="contato_maps"></div>
-        <div class="field"><label>Webhook do formulário</label><input type="url" id="contato_webhook"></div>
+        <div class="field"><label>Endpoint do formulário</label><input type="text" id="contato_webhook"></div>
       </div>
     </div>
 
@@ -595,7 +595,7 @@ const DEFAULT_DATA = {
     email: 'ipaltobranco@gmail.com',
     horario: 'Ter a Sex: 8h–12h · 14h–17h',
     maps: 'https://share.google/82FmH44K8gPxVRrL9',
-    webhook: 'https://hook.us2.make.com/ep7rv5utk09crfnfikuelogcf8a7o7me'
+    webhook: '/api/contact'
   },
   rodape: {
     instagram: 'https://www.instagram.com/ipaltobranco',
@@ -1152,7 +1152,7 @@ function buildSiteHTML(d) {
   html = html.replace('%%CONTATO_EMAIL%%', esc(d.contato.email));
   html = html.replace('%%CONTATO_HORARIO%%', esc(d.contato.horario));
   html = html.replace('%%HERO_CTA_URL2%%', esc(d.contato.maps));
-  html = html.replace('%%CONTATO_WEBHOOK%%', esc(d.contato.webhook || ''));
+  html = html.replace('%%CONTATO_WEBHOOK%%', esc((d.contato.webhook || '').startsWith('/') ? d.contato.webhook : '/api/contact'));
 
   // Rodapé
   html = html.replace('%%RODAPE_INSTAGRAM%%', esc(d.rodape.instagram));
@@ -1645,7 +1645,7 @@ document.getElementById("cNext").addEventListener("click",()=>{if(cIdx+getVis()<
 document.getElementById("cPrev").addEventListener("click",()=>{if(cIdx>0)cIdx--;updateC();});
 window.addEventListener("resize",()=>{cIdx=0;updateC();});
 const popupData=%%POPUP_DATA%%;
-function setupContactForm(){const form=document.querySelector('.contato-form');if(!form)return;const status=form.querySelector('.form-status');const submit=form.querySelector('.form-submit');form.addEventListener('submit',async function(event){event.preventDefault();const webhook=form.dataset.webhook;if(!webhook)return;if(status)status.textContent='Enviando...';if(submit)submit.disabled=true;const payload=new FormData(form);payload.append('origem','site-ipab');payload.append('pagina',window.location.href);payload.append('enviado_em',new Date().toISOString());try{await fetch(webhook,{method:'POST',mode:'no-cors',body:payload});form.reset();if(status)status.textContent='Mensagem enviada.';}catch(error){if(status)status.textContent='Nao foi possivel enviar. Tente novamente.';}finally{if(submit)submit.disabled=false;}});}
+function setupContactForm(){const form=document.querySelector('.contato-form');if(!form)return;const status=form.querySelector('.form-status');const submit=form.querySelector('.form-submit');form.addEventListener('submit',async function(event){event.preventDefault();const webhook=form.dataset.webhook;if(!webhook)return;if(status)status.textContent='Enviando...';if(submit)submit.disabled=true;const payload=Object.fromEntries(new FormData(form).entries());payload.pagina=window.location.href;try{const isInternal=webhook.startsWith('/');const response=await fetch(webhook,{method:'POST',headers:isInternal?{'Content-Type':'application/json'}:undefined,body:isInternal?JSON.stringify(payload):new FormData(form),mode:isInternal?'same-origin':'no-cors'});if(isInternal&&!response.ok)throw new Error('contact_failed');form.reset();if(status)status.textContent='Mensagem enviada.';}catch(error){if(status)status.textContent='Nao foi possivel enviar. Tente novamente.';}finally{if(submit)submit.disabled=false;}});}
 setupContactForm();document.querySelectorAll(".aviso-card.clickable").forEach(card=>{
   const idx=parseInt(card.dataset.popupIdx);
   card.addEventListener("click",()=>openPopup(idx));

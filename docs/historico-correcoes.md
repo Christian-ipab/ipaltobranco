@@ -189,3 +189,14 @@ npm.cmd run hash -- minhaSenha123
 - Se `/api/public-content` retornar `{"content":null}`, nenhuma alteracao foi salva ainda.
 - Auditoria: `GET /api/history` (admin) retorna as 20 ultimas edicoes (quem salvou e quando).
 - Para revogar acesso de um editor: remover a entrada dele de `ADMIN_USERS` e fazer `fly deploy` (ou reiniciar o backend local).
+
+## Proxima etapa com VPS + n8n
+
+- O formulario de contato agora deve enviar para `/api/contact`, nao diretamente para um webhook publico.
+- O backend repassa a mensagem ao n8n usando a variavel `N8N_CONTACT_WEBHOOK_URL`.
+- Payload enviado ao n8n:
+  - `nome`, `email`, `telefone`, `mensagem`
+  - `origem=site-ipab`
+  - `pagina`, `enviado_em`, `ip`, `user_agent`
+- A rota tem limite de 10 envios por hora por IP e valida os campos obrigatorios.
+- Na VPS/n8n, crie um workflow com Webhook `POST` e copie a URL de producao para `N8N_CONTACT_WEBHOOK_URL`.
