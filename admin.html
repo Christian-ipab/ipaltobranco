@@ -323,7 +323,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
       </div>
       <div class="notice notice-amber">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        O primeiro aviso exibe o pop-up de convocação quando clicado. Para alterar o texto do pop-up, edite o aviso com a tag "Administrativo".
+        O aviso da conferência aparece primeiro. A convocação administrativa continua abrindo o pop-up quando clicada.
       </div>
     </div>
 
@@ -555,8 +555,8 @@ const DEFAULT_DATA = {
     ]
   },
   avisos: [
-    { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
     { tag: 'Conferência', title: 'Confessionalidade Reformada', image: 'assets/avisos/bradley-arakelian-thumb.jpg', anchor: 'aviso-confessionalidade-reformada', speaker: 'Rev. Bradley Arakelian', speakerRole: 'Pastor da Igreja Presbiteriana em North City, EUA', date: 'Dia 21 de junho', services: [{ time: '09:30h', text: 'Mt. 16:13-18' }, { time: '18:30h', text: 'João 20:24-31' }], popup: '' },
+    { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
     { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: 'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45' },
     { tag: 'Pregações', title: 'Série Expositiva em I Coríntios', popup: 'Série Expositiva em I Coríntios\n\nAcompanhe a playlist com as pregações da série expositiva em I Coríntios.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPop0GHGBin5qUVT45K4H_V' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — A Igreja de Cristo', popup: '' },
@@ -1108,6 +1108,11 @@ function buildSiteHTML(d) {
     if (speakerBlock || dateBlock || servicesBlock) return `${speakerBlock}${dateBlock}${servicesBlock}`;
     return a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : '';
   };
+  const orderAvisos = avisos => avisos.map((item, originalIndex) => ({ item, originalIndex })).sort((a, b) => {
+    const aConference = a.item.anchor === 'aviso-confessionalidade-reformada' ? -1 : 0;
+    const bConference = b.item.anchor === 'aviso-confessionalidade-reformada' ? -1 : 0;
+    return aConference - bConference;
+  });
 
   // Replace hero
   html = html.replace('%%HERO_EYEBROW%%', esc(d.hero.eyebrow));
@@ -1123,9 +1128,9 @@ function buildSiteHTML(d) {
   ).join(''));
 
   // Avisos
-  html = html.replace('%%AVISOS%%', d.avisos.map((item, i) => {
+  html = html.replace('%%AVISOS%%', orderAvisos(d.avisos).map(({ item, originalIndex }) => {
     const a = normalizeAviso(item);
-    return `<div${a.anchor ? ` id="${esc(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}><span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`;
+    return `<div${a.anchor ? ` id="${esc(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+originalIndex+'"' : '"'}><span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`;
   }).join(''));
 
   // Popup modals

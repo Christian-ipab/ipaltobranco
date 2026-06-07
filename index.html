@@ -602,8 +602,8 @@
     <div class="bx-rule"></div>
     <div class="carousel-outer" id="cOuter">
       <div class="carousel-track" id="cTrack">
-        <div class="aviso-card"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
         <div class="aviso-card" id="aviso-confessionalidade-reformada"><span class="aviso-tag">Conferência</span><div class="aviso-title">Confessionalidade Reformada</div><div class="aviso-speaker"><img class="aviso-speaker-photo" src="assets/avisos/bradley-arakelian-thumb.jpg" alt="Rev. Bradley Arakelian"><div><div class="aviso-speaker-label">Preletor</div><div class="aviso-speaker-name">Rev. Bradley Arakelian</div><div class="aviso-speaker-role">Pastor da Igreja Presbiteriana em North City, EUA</div></div></div><span class="aviso-date">Dia 21 de junho</span><div class="aviso-services"><div><span class="aviso-service-time">09:30h</span><div class="aviso-service-text">Mt. 16:13-18</div></div><div><span class="aviso-service-time">18:30h</span><div class="aviso-service-text">João 20:24-31</div></div></div></div>
+        <div class="aviso-card" id="aviso-assembleia"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
         <div class="aviso-card clickable" data-popup-idx="1" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card clickable" data-popup-idx="2" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em I Coríntios</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — A Igreja de Cristo</div></div>
@@ -877,6 +877,14 @@ function normalizeAviso(a){
   return a;
 }
 
+function orderAvisos(avisos){
+  return avisos.map((item, originalIndex) => ({ item, originalIndex })).sort((a, b) => {
+    const aConference = a.item.anchor === 'aviso-confessionalidade-reformada' ? -1 : 0;
+    const bConference = b.item.anchor === 'aviso-confessionalidade-reformada' ? -1 : 0;
+    return aConference - bConference;
+  });
+}
+
 function avisoDetailsHTML(a){
   const services = Array.isArray(a.services) ? a.services : [];
   const speakerBlock = a.speaker ? `<div class="aviso-speaker">${a.image ? `<img class="aviso-speaker-photo" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.speaker)}">` : ''}<div><div class="aviso-speaker-label">Preletor</div><div class="aviso-speaker-name">${escapeHTML(a.speaker)}</div>${a.speakerRole ? `<div class="aviso-speaker-role">${escapeHTML(a.speakerRole)}</div>` : ''}</div></div>` : '';
@@ -914,9 +922,9 @@ function applyContent(data){
   if (Array.isArray(data.avisos)) {
     const track = document.getElementById('cTrack');
     if (track) {
-      track.innerHTML = data.avisos.map((item, index) => {
+      track.innerHTML = orderAvisos(data.avisos).map(({ item, originalIndex }) => {
         const a = normalizeAviso(item);
-        return `<div${a.anchor ? ` id="${escapeHTML(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}><span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`;
+        return `<div${a.anchor ? ` id="${escapeHTML(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${originalIndex}" ${a.popup ? 'role="button" tabindex="0"' : ''}><span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`;
       }).join('');
     }
   }
@@ -988,6 +996,7 @@ function applyContent(data){
   if (typeof renderBoletimPreview === 'function') renderBoletimPreview();
   if (typeof renderBoletimEvents === 'function') renderBoletimEvents();
   refreshCarouselCards();
+  if (typeof setupAssemblyCard === 'function') setupAssemblyCard();
   setupDynamicPopups();
 }
 
@@ -1074,19 +1083,6 @@ window.IPAB_POPUPS = [
   'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45',
   'Série Expositiva em I Coríntios\n\nAcompanhe a playlist com as pregações da série expositiva em I Coríntios.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPop0GHGBin5qUVT45K4H_V'
 ];
-const firstCard = document.querySelector(".aviso-card");
-firstCard.classList.add("clickable");
-firstCard.setAttribute("role","button");
-firstCard.setAttribute("tabindex","0");
-
-// Add small "ver mais" hint to the card
-const hint = document.createElement("div");
-hint.style.cssText = "margin-top:1rem;font-family:Raleway,sans-serif;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--burgundy);display:flex;align-items:center;gap:0.4rem;transition:gap 0.2s";
-hint.innerHTML = "Ver convocação <span>→</span>";
-firstCard.appendChild(hint);
-firstCard.addEventListener("mouseenter",()=>hint.style.gap="0.7rem");
-firstCard.addEventListener("mouseleave",()=>hint.style.gap="0.4rem");
-
 function openModal(){backdrop.classList.add("open"); document.body.style.overflow="hidden";}
 function closeModal(){backdrop.classList.remove("open"); document.body.style.overflow="";}
 function openAssemblyModal(){
@@ -1097,8 +1093,25 @@ function openAssemblyModal(){
   openModal();
 }
 
-firstCard.addEventListener("click", openAssemblyModal);
-firstCard.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openAssemblyModal();});
+function setupAssemblyCard(){
+  const assemblyCard = document.getElementById("aviso-assembleia") || [...document.querySelectorAll(".aviso-card")].find(card => card.querySelector(".aviso-tag")?.textContent.trim() === "Administrativo");
+  if (!assemblyCard || assemblyCard.dataset.assemblyReady === "true") return;
+  if (assemblyCard.dataset.popupIdx) return;
+  assemblyCard.dataset.assemblyReady = "true";
+  assemblyCard.classList.add("clickable");
+  assemblyCard.setAttribute("role","button");
+  assemblyCard.setAttribute("tabindex","0");
+
+  const hint = document.createElement("div");
+  hint.style.cssText = "margin-top:1rem;font-family:Raleway,sans-serif;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--burgundy);display:flex;align-items:center;gap:0.4rem;transition:gap 0.2s";
+  hint.innerHTML = "Ver convocação <span>→</span>";
+  assemblyCard.appendChild(hint);
+  assemblyCard.addEventListener("mouseenter",()=>hint.style.gap="0.7rem");
+  assemblyCard.addEventListener("mouseleave",()=>hint.style.gap="0.4rem");
+  assemblyCard.addEventListener("click", openAssemblyModal);
+  assemblyCard.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openAssemblyModal();});
+}
+setupAssemblyCard();
 document.getElementById("modalClose").addEventListener("click", closeModal);
 backdrop.addEventListener("click",(e)=>{if(e.target===backdrop)closeModal();});
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeModal();});
