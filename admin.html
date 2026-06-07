@@ -556,7 +556,7 @@ const DEFAULT_DATA = {
   },
   avisos: [
     { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
-    { tag: 'Conferência', title: 'CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley', image: 'assets/avisos/confessionalidade-reformada-bradley.jpeg', anchor: 'aviso-confessionalidade-reformada', popup: '' },
+    { tag: 'Conferência', title: 'Confessionalidade Reformada', image: 'assets/avisos/bradley-arakelian-thumb.jpg', anchor: 'aviso-confessionalidade-reformada', speaker: 'Rev. Bradley Arakelian', speakerRole: 'Pastor da Igreja Presbiteriana em North City, EUA', date: 'Dia 21 de junho', services: [{ time: '09:30h', text: 'Mt. 16:13-18' }, { time: '18:30h', text: 'João 20:24-31' }], popup: '' },
     { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: 'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45' },
     { tag: 'Pregações', title: 'Série Expositiva em I Coríntios', popup: 'Série Expositiva em I Coríntios\n\nAcompanhe a playlist com as pregações da série expositiva em I Coríntios.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPop0GHGBin5qUVT45K4H_V' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — A Igreja de Cristo', popup: '' },
@@ -1094,6 +1094,20 @@ function exportSite() {
 function buildSiteHTML(d) {
   // We'll pull the base template from the stored template variable
   let html = SITE_TEMPLATE;
+  const normalizeAviso = a => {
+    if (a.anchor === 'aviso-confessionalidade-reformada' && !a.speaker) {
+      return { ...a, title: 'Confessionalidade Reformada', image: 'assets/avisos/bradley-arakelian-thumb.jpg', speaker: 'Rev. Bradley Arakelian', speakerRole: 'Pastor da Igreja Presbiteriana em North City, EUA', date: 'Dia 21 de junho', services: [{ time: '09:30h', text: 'Mt. 16:13-18' }, { time: '18:30h', text: 'João 20:24-31' }] };
+    }
+    return a;
+  };
+  const avisoDetailsHTML = a => {
+    const services = Array.isArray(a.services) ? a.services : [];
+    const speakerBlock = a.speaker ? `<div class="aviso-speaker">${a.image ? `<img class="aviso-speaker-photo" src="${esc(a.image)}" alt="${esc(a.speaker)}">` : ''}<div><div class="aviso-speaker-label">Preletor</div><div class="aviso-speaker-name">${esc(a.speaker)}</div>${a.speakerRole ? `<div class="aviso-speaker-role">${esc(a.speakerRole)}</div>` : ''}</div></div>` : '';
+    const dateBlock = a.date ? `<span class="aviso-date">${esc(a.date)}</span>` : '';
+    const servicesBlock = services.length ? `<div class="aviso-services">${services.map(s => `<div><span class="aviso-service-time">${esc(s.time)}</span><div class="aviso-service-text">${esc(s.text)}</div></div>`).join('')}</div>` : '';
+    if (speakerBlock || dateBlock || servicesBlock) return `${speakerBlock}${dateBlock}${servicesBlock}`;
+    return a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : '';
+  };
 
   // Replace hero
   html = html.replace('%%HERO_EYEBROW%%', esc(d.hero.eyebrow));
@@ -1109,9 +1123,10 @@ function buildSiteHTML(d) {
   ).join(''));
 
   // Avisos
-  html = html.replace('%%AVISOS%%', d.avisos.map((a, i) =>
-    `<div${a.anchor ? ` id="${esc(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}>${a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : ''}<span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`
-  ).join(''));
+  html = html.replace('%%AVISOS%%', d.avisos.map((item, i) => {
+    const a = normalizeAviso(item);
+    return `<div${a.anchor ? ` id="${esc(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}><span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`;
+  }).join(''));
 
   // Popup modals
   html = html.replace('%%POPUPS%%', d.avisos.filter(a => a.popup).map((a, i) => {
@@ -1391,6 +1406,14 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   .carousel-track{display:flex;gap:1.5rem;transition:transform .45s cubic-bezier(.25,.46,.45,.94)}
   .aviso-card{flex:0 0 calc(33.333% - 1rem);min-width:280px;background:var(--warm-white);border:1px solid var(--border);border-top:3px solid var(--burgundy);padding:2rem 1.8rem;transition:transform .3s,box-shadow .3s}
   .aviso-image{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;margin:-.5rem 0 1.25rem;border:1px solid var(--border);background:var(--cream)}
+  .aviso-speaker{display:flex;gap:.85rem;align-items:flex-start;margin:1rem 0 1.1rem}
+  .aviso-speaker-photo{width:66px;height:82px;flex:0 0 66px;object-fit:cover;object-position:center top;border:1px solid var(--border);background:var(--cream)}
+  .aviso-speaker-label,.aviso-date,.aviso-service-time{font-family:"Raleway",sans-serif;font-size:.56rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--burgundy)}
+  .aviso-speaker-name{font-family:"Libre Baskerville",serif;font-size:.95rem;color:var(--burgundy-deep);line-height:1.25;margin:.2rem 0}
+  .aviso-speaker-role,.aviso-service-text{font-family:"Crimson Pro",serif;font-size:.9rem;color:var(--text-muted);line-height:1.35}
+  .aviso-date{display:block;margin:.6rem 0 .65rem}
+  .aviso-services{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;border-top:1px solid var(--border);padding-top:.8rem;margin-top:.4rem}
+  .aviso-service-time{display:block;margin-bottom:.15rem}
   .aviso-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(107,37,53,.12)}
   .aviso-card.clickable{cursor:pointer}
   .aviso-card.clickable:hover .aviso-title{color:var(--burgundy)}

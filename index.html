@@ -277,6 +277,14 @@
   .carousel-track { display: flex; gap: 1.5rem; transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94); }
   .aviso-card { flex: 0 0 calc(33.333% - 1rem); min-width: 280px; background: var(--warm-white); border: 1px solid var(--border); border-top: 3px solid var(--burgundy); padding: 2rem 1.8rem; transition: transform 0.3s, box-shadow 0.3s; }
   .aviso-image { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; margin: -0.5rem 0 1.25rem; border: 1px solid var(--border); background: var(--cream); }
+  .aviso-speaker { display: flex; gap: 0.85rem; align-items: flex-start; margin: 1rem 0 1.1rem; }
+  .aviso-speaker-photo { width: 66px; height: 82px; flex: 0 0 66px; object-fit: cover; object-position: center top; border: 1px solid var(--border); background: var(--cream); }
+  .aviso-speaker-label, .aviso-date, .aviso-service-time { font-family: "Raleway", sans-serif; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--burgundy); }
+  .aviso-speaker-name { font-family: "Libre Baskerville", serif; font-size: 0.95rem; color: var(--burgundy-deep); line-height: 1.25; margin: 0.2rem 0; }
+  .aviso-speaker-role, .aviso-service-text { font-family: "Crimson Pro", serif; font-size: 0.9rem; color: var(--text-muted); line-height: 1.35; }
+  .aviso-date { display: block; margin: 0.6rem 0 0.65rem; }
+  .aviso-services { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; border-top: 1px solid var(--border); padding-top: 0.8rem; margin-top: 0.4rem; }
+  .aviso-service-time { display: block; margin-bottom: 0.15rem; }
   .aviso-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(107,37,53,0.12); }
   .aviso-tag { font-family: "Raleway", sans-serif; font-size: 0.57rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--burgundy); background: var(--burgundy-pale); padding: 0.22rem 0.55rem; display: inline-block; margin-bottom: 0.9rem; border-radius: 1px; }
   .aviso-title { font-family: "Libre Baskerville", serif; font-size: 1.1rem; font-weight: 400; color: var(--burgundy-deep); line-height: 1.5; }
@@ -595,7 +603,7 @@
     <div class="carousel-outer" id="cOuter">
       <div class="carousel-track" id="cTrack">
         <div class="aviso-card"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
-        <div class="aviso-card" id="aviso-confessionalidade-reformada"><img class="aviso-image" src="assets/avisos/confessionalidade-reformada-bradley.jpeg" alt="Conferência Confessionalidade Reformada com Rev. Bradley"><span class="aviso-tag">Conferência</span><div class="aviso-title">CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley</div></div>
+        <div class="aviso-card" id="aviso-confessionalidade-reformada"><span class="aviso-tag">Conferência</span><div class="aviso-title">Confessionalidade Reformada</div><div class="aviso-speaker"><img class="aviso-speaker-photo" src="assets/avisos/bradley-arakelian-thumb.jpg" alt="Rev. Bradley Arakelian"><div><div class="aviso-speaker-label">Preletor</div><div class="aviso-speaker-name">Rev. Bradley Arakelian</div><div class="aviso-speaker-role">Pastor da Igreja Presbiteriana em North City, EUA</div></div></div><span class="aviso-date">Dia 21 de junho</span><div class="aviso-services"><div><span class="aviso-service-time">09:30h</span><div class="aviso-service-text">Mt. 16:13-18</div></div><div><span class="aviso-service-time">18:30h</span><div class="aviso-service-text">João 20:24-31</div></div></div></div>
         <div class="aviso-card clickable" data-popup-idx="1" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card clickable" data-popup-idx="2" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em I Coríntios</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — A Igreja de Cristo</div></div>
@@ -854,6 +862,30 @@ function setButtonLabel(selector, value){
   el.innerHTML = `${icon}${escapeHTML(value)}`;
 }
 
+function normalizeAviso(a){
+  if (a.anchor === 'aviso-confessionalidade-reformada' && !a.speaker) {
+    return {
+      ...a,
+      title: 'Confessionalidade Reformada',
+      image: 'assets/avisos/bradley-arakelian-thumb.jpg',
+      speaker: 'Rev. Bradley Arakelian',
+      speakerRole: 'Pastor da Igreja Presbiteriana em North City, EUA',
+      date: 'Dia 21 de junho',
+      services: [{ time: '09:30h', text: 'Mt. 16:13-18' }, { time: '18:30h', text: 'João 20:24-31' }]
+    };
+  }
+  return a;
+}
+
+function avisoDetailsHTML(a){
+  const services = Array.isArray(a.services) ? a.services : [];
+  const speakerBlock = a.speaker ? `<div class="aviso-speaker">${a.image ? `<img class="aviso-speaker-photo" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.speaker)}">` : ''}<div><div class="aviso-speaker-label">Preletor</div><div class="aviso-speaker-name">${escapeHTML(a.speaker)}</div>${a.speakerRole ? `<div class="aviso-speaker-role">${escapeHTML(a.speakerRole)}</div>` : ''}</div></div>` : '';
+  const dateBlock = a.date ? `<span class="aviso-date">${escapeHTML(a.date)}</span>` : '';
+  const servicesBlock = services.length ? `<div class="aviso-services">${services.map(s => `<div><span class="aviso-service-time">${escapeHTML(s.time)}</span><div class="aviso-service-text">${escapeHTML(s.text)}</div></div>`).join('')}</div>` : '';
+  if (speakerBlock || dateBlock || servicesBlock) return `${speakerBlock}${dateBlock}${servicesBlock}`;
+  return a.image ? `<img class="aviso-image" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.title)}">` : '';
+}
+
 function applyContent(data){
   if (!data) return;
 
@@ -882,9 +914,10 @@ function applyContent(data){
   if (Array.isArray(data.avisos)) {
     const track = document.getElementById('cTrack');
     if (track) {
-      track.innerHTML = data.avisos.map((a, index) =>
-        `<div${a.anchor ? ` id="${escapeHTML(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}>${a.image ? `<img class="aviso-image" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.title)}">` : ''}<span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
-      ).join('');
+      track.innerHTML = data.avisos.map((item, index) => {
+        const a = normalizeAviso(item);
+        return `<div${a.anchor ? ` id="${escapeHTML(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}><span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${avisoDetailsHTML(a)}${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`;
+      }).join('');
     }
   }
 
