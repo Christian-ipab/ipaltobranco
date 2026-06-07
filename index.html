@@ -573,7 +573,7 @@
     <div class="carousel-outer" id="cOuter">
       <div class="carousel-track" id="cTrack">
         <div class="aviso-card"><span class="aviso-tag">Administrativo</span><div class="aviso-title">Convocação — Assembleia Geral Extraordinária</div></div>
-        <div class="aviso-card"><img class="aviso-image" src="assets/avisos/confessionalidade-reformada-bradley.jpeg" alt="Conferência Confessionalidade Reformada com Rev. Bradley"><span class="aviso-tag">Conferência</span><div class="aviso-title">CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley</div></div>
+        <div class="aviso-card" id="aviso-confessionalidade-reformada"><img class="aviso-image" src="assets/avisos/confessionalidade-reformada-bradley.jpeg" alt="Conferência Confessionalidade Reformada com Rev. Bradley"><span class="aviso-tag">Conferência</span><div class="aviso-title">CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley</div></div>
         <div class="aviso-card clickable" data-popup-idx="1" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em II Samuel</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card clickable" data-popup-idx="2" role="button" tabindex="0"><span class="aviso-tag">Pregações</span><div class="aviso-title">Série Expositiva em I Coríntios</div><div class="aviso-hint">Ver playlist &rarr;</div></div>
         <div class="aviso-card"><span class="aviso-tag">EBD</span><div class="aviso-title">Escola Bíblica Dominical — A Igreja de Cristo</div></div>
@@ -855,7 +855,7 @@ function applyContent(data){
     const track = document.getElementById('cTrack');
     if (track) {
       track.innerHTML = data.avisos.map((a, index) =>
-        `<div class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}>${a.image ? `<img class="aviso-image" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.title)}">` : ''}<span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
+        `<div${a.anchor ? ` id="${escapeHTML(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable' : ''}" data-popup-idx="${index}" ${a.popup ? 'role="button" tabindex="0"' : ''}>${a.image ? `<img class="aviso-image" src="${escapeHTML(a.image)}" alt="${escapeHTML(a.title)}">` : ''}<span class="aviso-tag">${escapeHTML(a.tag)}</span><div class="aviso-title">${escapeHTML(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais &rarr;</div>' : ''}</div>`
       ).join('');
     }
   }
@@ -987,11 +987,14 @@ let cIdx=0;
 const cTrack=document.getElementById("cTrack");
 let cCards=cTrack.querySelectorAll(".aviso-card");
 function getVis(){const w=document.getElementById("cOuter").offsetWidth;return w<600?1:w<920?2:3;}
-function refreshCarouselCards(){cCards=cTrack.querySelectorAll(".aviso-card");cIdx=0;updateC();}
+function refreshCarouselCards(){cCards=cTrack.querySelectorAll(".aviso-card");cIdx=0;updateC();focusAvisoFromHash();}
 function updateC(){if(!cCards.length)return;const cw=cCards[0].offsetWidth+24;cTrack.style.transform="translateX(-"+(cIdx*cw)+"px)";}
+function focusAvisoFromHash(){const id=decodeURIComponent(location.hash.slice(1));if(!id)return;const target=document.getElementById(id);if(!target||!target.classList.contains("aviso-card"))return;const cards=[...cCards];const idx=cards.indexOf(target);if(idx<0)return;cIdx=Math.min(idx,Math.max(0,cards.length-getVis()));updateC();setTimeout(()=>target.scrollIntoView({block:"center"}),50);}
 document.getElementById("cNext").addEventListener("click",()=>{if(cIdx+getVis()<cCards.length)cIdx++;updateC();});
 document.getElementById("cPrev").addEventListener("click",()=>{if(cIdx>0)cIdx--;updateC();});
 window.addEventListener("resize",()=>{cIdx=0;updateC();});
+window.addEventListener("hashchange",focusAvisoFromHash);
+window.addEventListener("load",focusAvisoFromHash);
 
 // MODAL
 const backdrop = document.getElementById("modalBackdrop");

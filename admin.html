@@ -477,6 +477,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     <div class="field"><label>Tag / Categoria</label><input type="text" id="aviso_tag" placeholder="EBD, Pregações, Família..."></div>
     <div class="field"><label>Título do aviso</label><input type="text" id="aviso_title"></div>
     <div class="field"><label>Imagem do aviso (opcional)</label><input type="text" id="aviso_image" placeholder="assets/avisos/arquivo.jpeg"></div>
+    <div class="field"><label>Âncora do aviso (opcional)</label><input type="text" id="aviso_anchor" placeholder="aviso-confessionalidade-reformada"></div>
     <div class="field">
       <label>Texto do pop-up (opcional — deixe em branco para sem pop-up)</label>
       <textarea id="aviso_popup" rows="8" placeholder="Se preenchido, um clique no card abrirá este texto em um pop-up."></textarea>
@@ -555,7 +556,7 @@ const DEFAULT_DATA = {
   },
   avisos: [
     { tag: 'Administrativo', title: 'Convocação — Assembleia Geral Extraordinária', popup: 'Convocação de Assembleia Geral Extraordinária\n\nO Conselho da Igreja Presbiteriana do Alto Branco, no uso de suas atribuições constitucionais (CI/IPB), convoca todos os membros comungantes, em pleno gozo de seus direitos, para a Assembleia Geral Extraordinária a realizar-se no dia 31 de maio de 2026, no templo desta igreja, imediatamente após o culto matutino.\n\nA Assembleia terá como finalidade exclusiva:\n\nEleição de Oficiais: eleição de 01 (um) Presbítero Regente e 01 (um) Diácono, para mandato de 02 (dois) anos, nos termos dos Artigos 54 e 59 da Constituição da Igreja Presbiteriana do Brasil.\n\nOs membros da igreja poderão indicar nomes ao Conselho até o dia 30/03/2026, mediante comunicação formal, para que sejam avaliados quanto à vocação, idoneidade e elegibilidade constitucional.\n\nCampina Grande, 01 de Março de 2026.' },
-    { tag: 'Conferência', title: 'CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley', image: 'assets/avisos/confessionalidade-reformada-bradley.jpeg', popup: '' },
+    { tag: 'Conferência', title: 'CONFERÊNCIA CONFESSIONALIDADE REFORMADA — Convidado: Rev. Bradley', image: 'assets/avisos/confessionalidade-reformada-bradley.jpeg', anchor: 'aviso-confessionalidade-reformada', popup: '' },
     { tag: 'Pregações', title: 'Série Expositiva em II Samuel', popup: 'Série Expositiva em II Samuel\n\nAcompanhe a playlist com as pregações da série expositiva em II Samuel.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPmCaL0Xu28gR1KyKKm_b45' },
     { tag: 'Pregações', title: 'Série Expositiva em I Coríntios', popup: 'Série Expositiva em I Coríntios\n\nAcompanhe a playlist com as pregações da série expositiva em I Coríntios.\n\nPlaylist no YouTube:\nhttps://www.youtube.com/playlist?list=PL9Y3q8-GNYnPop0GHGBin5qUVT45K4H_V' },
     { tag: 'EBD', title: 'Escola Bíblica Dominical — A Igreja de Cristo', popup: '' },
@@ -803,11 +804,13 @@ function openAvisoModal(idx) {
     document.getElementById('aviso_tag').value = DATA.avisos[idx].tag;
     document.getElementById('aviso_title').value = DATA.avisos[idx].title;
     document.getElementById('aviso_image').value = DATA.avisos[idx].image || '';
+    document.getElementById('aviso_anchor').value = DATA.avisos[idx].anchor || '';
     document.getElementById('aviso_popup').value = DATA.avisos[idx].popup || '';
   } else {
     document.getElementById('aviso_tag').value = '';
     document.getElementById('aviso_title').value = '';
     document.getElementById('aviso_image').value = '';
+    document.getElementById('aviso_anchor').value = '';
     document.getElementById('aviso_popup').value = '';
   }
   modal.classList.add('open');
@@ -818,6 +821,7 @@ function saveAviso() {
     tag: document.getElementById('aviso_tag').value,
     title: document.getElementById('aviso_title').value,
     image: document.getElementById('aviso_image').value,
+    anchor: document.getElementById('aviso_anchor').value,
     popup: document.getElementById('aviso_popup').value
   };
   if (editingAvisoIdx === -1) DATA.avisos.push(item);
@@ -1106,7 +1110,7 @@ function buildSiteHTML(d) {
 
   // Avisos
   html = html.replace('%%AVISOS%%', d.avisos.map((a, i) =>
-    `<div class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}>${a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : ''}<span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`
+    `<div${a.anchor ? ` id="${esc(a.anchor)}"` : ''} class="aviso-card${a.popup ? ' clickable" data-popup-idx="'+i+'"' : '"'}>${a.image ? `<img class="aviso-image" src="${esc(a.image)}" alt="${esc(a.title)}">` : ''}<span class="aviso-tag">${esc(a.tag)}</span><div class="aviso-title">${esc(a.title)}</div>${a.popup ? '<div class="aviso-hint">Ver mais →</div>' : ''}</div>`
   ).join(''));
 
   // Popup modals
@@ -1644,12 +1648,15 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
 <script>
 document.getElementById("hamBtn").addEventListener("click",()=>document.getElementById("mobileMenu").classList.toggle("open"));
 document.querySelectorAll(".mobile-menu a").forEach(a=>a.addEventListener("click",()=>document.getElementById("mobileMenu").classList.remove("open")));
-let cIdx=0;const cTrack=document.getElementById("cTrack");const cCards=cTrack.querySelectorAll(".aviso-card");
+let cIdx=0;const cTrack=document.getElementById("cTrack");let cCards=cTrack.querySelectorAll(".aviso-card");
 function getVis(){const w=document.getElementById("cOuter").offsetWidth;return w<600?1:w<920?2:3;}
-function updateC(){const cw=cCards[0].offsetWidth+24;cTrack.style.transform="translateX(-"+(cIdx*cw)+"px)";}
+function updateC(){if(!cCards.length)return;const cw=cCards[0].offsetWidth+24;cTrack.style.transform="translateX(-"+(cIdx*cw)+"px)";}
+function focusAvisoFromHash(){const id=decodeURIComponent(location.hash.slice(1));if(!id)return;const target=document.getElementById(id);if(!target||!target.classList.contains("aviso-card"))return;const cards=[...cCards];const idx=cards.indexOf(target);if(idx<0)return;cIdx=Math.min(idx,Math.max(0,cards.length-getVis()));updateC();setTimeout(()=>target.scrollIntoView({block:"center"}),50);}
 document.getElementById("cNext").addEventListener("click",()=>{if(cIdx+getVis()<cCards.length)cIdx++;updateC();});
 document.getElementById("cPrev").addEventListener("click",()=>{if(cIdx>0)cIdx--;updateC();});
 window.addEventListener("resize",()=>{cIdx=0;updateC();});
+window.addEventListener("hashchange",focusAvisoFromHash);
+window.addEventListener("load",focusAvisoFromHash);
 const popupData=%%POPUP_DATA%%;
 function setupContactForm(){const form=document.querySelector('.contato-form');if(!form)return;const status=form.querySelector('.form-status');const submit=form.querySelector('.form-submit');form.addEventListener('submit',async function(event){event.preventDefault();const webhook=form.dataset.webhook;if(!webhook)return;if(status)status.textContent='Enviando...';if(submit)submit.disabled=true;const payload=Object.fromEntries(new FormData(form).entries());payload.pagina=window.location.href;try{const isInternal=webhook.startsWith('/');const response=await fetch(webhook,{method:'POST',headers:isInternal?{'Content-Type':'application/json'}:undefined,body:isInternal?JSON.stringify(payload):new FormData(form),mode:isInternal?'same-origin':'no-cors'});if(isInternal&&!response.ok)throw new Error('contact_failed');form.reset();if(status)status.textContent='Mensagem enviada.';}catch(error){if(status)status.textContent='Nao foi possivel enviar. Tente novamente.';}finally{if(submit)submit.disabled=false;}});}
 setupContactForm();document.querySelectorAll(".aviso-card.clickable").forEach(card=>{
