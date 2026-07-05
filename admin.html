@@ -372,7 +372,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     <!-- LIDERANÇA PANEL -->
     <div class="panel" id="panel-lideranca">
       <div class="panel-header">
-        <div><div class="panel-title">Liderança / Conselho</div><div class="panel-desc">Edite os oficiais e suas fotos. Clique em um membro para editar.</div></div>
+        <div><div class="panel-title">Nossa Liderança</div><div class="panel-desc">Edite os oficiais e suas fotos. Clique em um membro para editar.</div></div>
         <button class="btn btn-primary" onclick="openLiderModal(-1)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Novo oficial
@@ -385,6 +385,10 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
       <div class="card">
         <div class="card-title">Presbíteros Regentes</div>
         <div id="lideresRegentes"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Diáconos</div>
+        <div id="lideresDiaconos"></div>
       </div>
     </div>
 
@@ -615,8 +619,32 @@ const DEFAULT_DATA = {
   }
 };
 
+function ensureLeadershipEntries(data) {
+  if (!Array.isArray(data.lideres)) data.lideres = [];
+  if (!data.lideres.some(l => l.nome === 'Pb. Clodoaldo Marquim')) {
+    data.lideres.push({ nome: 'Pb. Clodoaldo Marquim', cargo: 'Presbítero Regente', grupo: 'regente', photo: '' });
+  }
+  if (!data.lideres.some(l => l.nome === 'Diac. Christian Borges')) {
+    data.lideres.push({ nome: 'Diac. Christian Borges', cargo: 'Diácono', grupo: 'diacono', photo: '' });
+  }
+  if (!data.leadershipPhotosMigrated) {
+    const photos = {
+      'Rev. Augusto Brayner': 'assets/lideranca/rev-augusto.png',
+      'Rev. Aldenor Pacífico': 'assets/lideranca/rev-aldenor.png',
+      'Pb. Luciano Cavalcanti': 'assets/lideranca/preb-luciano.png',
+      'Pb. Clodoaldo Marquim': 'assets/lideranca/presb-clodoalto.png',
+      'Diac. Christian Borges': 'assets/lideranca/diac-christian.png'
+    };
+    data.lideres.forEach(leader => {
+      if (photos[leader.nome]) leader.photo = photos[leader.nome];
+    });
+    data.leadershipPhotosMigrated = true;
+  }
+  return data;
+}
+
 function loadData() {
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  return ensureLeadershipEntries(JSON.parse(JSON.stringify(DEFAULT_DATA)));
 }
 async function saveData(data) {
   showStatus('Salvando...', true);
@@ -661,7 +689,7 @@ async function loadServerData() {
 
     const payload = await response.json();
     if (payload.content) {
-      DATA = payload.content;
+      DATA = ensureLeadershipEntries(payload.content);
       renderPanel(document.querySelector('.nav-item.active').id.replace('nav-',''));
     } else {
       await saveData(DATA);
@@ -876,9 +904,11 @@ function renderTransmissao() {
 // ═══════════════════════════════════════
 function renderLideranca() {
   const docentes = DATA.lideres.filter(l => l.grupo === 'docente');
-  const regentes = DATA.lideres.filter(l => l.grupo !== 'docente');
+  const regentes = DATA.lideres.filter(l => l.grupo === 'regente');
+  const diaconos = DATA.lideres.filter(l => l.grupo === 'diacono');
   renderLiderGroup('lideresDocentes', docentes);
   renderLiderGroup('lideresRegentes', regentes);
+  renderLiderGroup('lideresDiaconos', diaconos);
 }
 
 function renderLiderGroup(elId, list) {
@@ -1052,7 +1082,7 @@ function renderConfiguracoes() {
     { key: 'avisos', label: 'Avisos & Programações' },
     { key: 'horarios', label: 'Horários dos Cultos' },
     { key: 'transmissao', label: 'Transmissão ao Vivo' },
-    { key: 'lideranca', label: 'Liderança / Conselho' },
+    { key: 'lideranca', label: 'Nossa Liderança' },
     { key: 'boletim', label: 'Boletim Semanal' },
     { key: 'conheca', label: 'Ministérios Parceiros' },
     { key: 'contato', label: 'Contato & Secretaria' },
@@ -1158,12 +1188,18 @@ function buildSiteHTML(d) {
 
   // Lideres
   const docentes = d.lideres.filter(l => l.grupo === 'docente');
-  const regentes = d.lideres.filter(l => l.grupo !== 'docente');
+  const regentes = d.lideres.filter(l => l.grupo === 'regente');
+  const diaconos = d.lideres.filter(l => l.grupo === 'diacono');
+  const leaderCard = l =>
+    `<div class="lider-card"><img class="lider-avatar" src="${l.photo || defaultAvatar()}" alt="${esc(l.nome)}"><div><div class="lider-nome">${esc(l.nome)}</div><div class="lider-cargo">${esc(l.cargo)}</div></div></div>`;
   html = html.replace('%%LIDERES_DOCENTES%%', docentes.map(l =>
-    `<div class="lider-card"><img class="lider-avatar" src="${l.photo || ''}" alt="${esc(l.nome)}"><div><div class="lider-nome">${esc(l.nome)}</div><div class="lider-cargo">${esc(l.cargo)}</div></div></div>`
+    leaderCard(l)
   ).join(''));
   html = html.replace('%%LIDERES_REGENTES%%', regentes.map(l =>
-    `<div class="lider-card"><img class="lider-avatar" src="${l.photo || ''}" alt="${esc(l.nome)}"><div><div class="lider-nome">${esc(l.nome)}</div><div class="lider-cargo">${esc(l.cargo)}</div></div></div>`
+    leaderCard(l)
+  ).join(''));
+  html = html.replace('%%LIDERES_DIACONOS%%', diaconos.map(l =>
+    leaderCard(l)
   ).join(''));
 
   // Boletim
@@ -1447,7 +1483,7 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   .yt-btn{display:inline-flex;align-items:center;gap:.75rem;background:#c00;color:white;font-family:"Raleway",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.9rem 1.8rem;text-decoration:none;border-radius:2px;transition:opacity .2s}
   .yt-btn:hover{opacity:.88}
   #lideranca{background:var(--burgundy-deep)}
-  .lideranca-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:3rem}
+  .lideranca-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3rem;margin-top:3rem}
   .lideranca-grupo-titulo{font-family:"Raleway",sans-serif;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:.75rem;margin-bottom:1.5rem}
   .lider-card{display:flex;align-items:flex-start;gap:1.2rem;padding:1.2rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
   .lider-card:last-child{border-bottom:none}
@@ -1606,12 +1642,12 @@ const SITE_TEMPLATE = `<!DOCTYPE html>
   </div>
 </div></section>
 <section id="lideranca"><div class="container">
-  <div class="section-eyebrow" style="color:rgba(255,255,255,.38)">Conselho</div>
   <h2 class="section-title" style="color:white">Nossa <em style="color:rgba(255,255,255,.55)">Liderança</em></h2>
   <div class="bx-rule" style="background:rgba(255,255,255,.2)"></div>
   <div class="lideranca-grid">
     <div><div class="lideranca-grupo-titulo">Presbíteros Docentes</div>%%LIDERES_DOCENTES%%</div>
     <div><div class="lideranca-grupo-titulo">Presbíteros Regentes</div>%%LIDERES_REGENTES%%</div>
+    <div><div class="lideranca-grupo-titulo">Diáconos</div>%%LIDERES_DIACONOS%%</div>
   </div>
 </div></section>
 <section id="boletim"><div class="container">
