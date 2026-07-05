@@ -339,6 +339,7 @@
   .boletim-badge { position: absolute; top: 1rem; right: 1rem; background: var(--burgundy); color: white; font-family: "Raleway", sans-serif; font-size: 0.54rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.22rem 0.55rem; border-radius: 1px; z-index: 2; }
   .boletim-pdf-link { display: flex; flex-direction: column; width: 100%; height: 100%; color: inherit; text-decoration: none; }
   .boletim-pdf-thumb { width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: top center; background: var(--cream); }
+  iframe.boletim-pdf-thumb { border: 0; pointer-events: none; }
   .boletim-pdf-info { border-top: 1px solid var(--border); padding: 1rem 1.15rem 1.15rem; background: var(--warm-white); }
   .boletim-pdf-date { font-family: "Raleway", sans-serif; font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--burgundy); margin-bottom: 0.35rem; }
   .boletim-pdf-title { font-family: "Libre Baskerville", serif; font-size: 1.05rem; color: var(--burgundy-deep); line-height: 1.35; }
@@ -1155,13 +1156,17 @@ const IPAB_BOLETINS = [
   { date: '2026-04-12', id: '1asDzA3U7dgvXzsyTBr8F7L5RjqZeFp0x' },
   { date: '2026-04-19', id: '141_4PU1dcZhyKQjJHStCr2rJls25fWlv' },
   { date: '2026-04-26', id: '150haEGsERmrFrE7jvUealpGwTtz3pskv' },
-  { date: '2026-05-03', id: '1ycyx0Ku1Zy5_t7DQUUlcxxw7NXiYDuLt' }
+  { date: '2026-05-03', id: '1ycyx0Ku1Zy5_t7DQUUlcxxw7NXiYDuLt' },
+  { date: '2026-06-07', id: 'boletim-2026-06-07', url: 'assets/boletins/boletim-2026-06-07.pdf' },
+  { date: '2026-06-14', id: 'boletim-2026-06-14', url: 'assets/boletins/boletim-2026-06-14.pdf' },
+  { date: '2026-06-21', id: 'boletim-2026-06-21', url: 'assets/boletins/boletim-2026-06-21.pdf' },
+  { date: '2026-06-28', id: 'boletim-2026-06-28', url: 'assets/boletins/boletim-2026-06-28.pdf' }
 ];
 let activeBoletimId = IPAB_BOLETINS[IPAB_BOLETINS.length - 1]?.id || '';
 const boletimDateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 function boletimDate(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d);}
-function boletimPreviewUrl(id){return `https://drive.google.com/file/d/${id}/preview`;}
-function boletimThumbUrl(id){return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;}
+function boletimPreviewUrl(boletim){return boletim.url || `https://drive.google.com/file/d/${boletim.id}/preview`;}
+function boletimThumbUrl(boletim){return `https://drive.google.com/thumbnail?id=${boletim.id}&sz=w1000`;}
 function activeBoletim(){return IPAB_BOLETINS.find(b=>b.id===activeBoletimId) || IPAB_BOLETINS[IPAB_BOLETINS.length-1];}
 function renderBoletimPreview(){
   const preview = document.querySelector('.boletim-preview-inner');
@@ -1170,8 +1175,11 @@ function renderBoletimPreview(){
   if (!preview || !b) return;
   const d = boletimDate(b.date);
   if (badge) badge.textContent = activeBoletimId === IPAB_BOLETINS[IPAB_BOLETINS.length - 1].id ? 'Mais recente' : 'Arquivo';
-  preview.innerHTML = `<a class="boletim-pdf-link" href="${boletimPreviewUrl(b.id)}" target="_blank" rel="noopener">
-    <img class="boletim-pdf-thumb" src="${boletimThumbUrl(b.id)}" alt="Pr\u00e9via do boletim de ${boletimDateFmt.format(d)}" loading="lazy">
+  const previewMedia = b.url
+    ? `<iframe class="boletim-pdf-thumb" src="${boletimPreviewUrl(b)}#page=1&toolbar=0&navpanes=0&scrollbar=0" title="Prévia do boletim de ${boletimDateFmt.format(d)}" loading="lazy" tabindex="-1"></iframe>`
+    : `<img class="boletim-pdf-thumb" src="${boletimThumbUrl(b)}" alt="Prévia do boletim de ${boletimDateFmt.format(d)}" loading="lazy">`;
+  preview.innerHTML = `<a class="boletim-pdf-link" href="${boletimPreviewUrl(b)}" target="_blank" rel="noopener">
+    ${previewMedia}
     <div class="boletim-pdf-info">
       <div class="boletim-pdf-date">${boletimDateFmt.format(d)}</div>
       <div class="boletim-pdf-title">Boletim Semanal</div>
