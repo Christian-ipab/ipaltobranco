@@ -1,0 +1,57 @@
+name: Sincronizar boletins
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 10 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-boletins
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Sincronizar PDFs do Google Drive
+        env:
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/sync-boletins-drive.mjs
+
+      - name: Publicar alterações
+        id: publish
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- assets/boletins)" ]; then
+            echo "Nenhum boletim novo."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/boletins
+          git commit -m "chore: sync bulletins from Drive"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Fly.io
+        if: ${{ env.FLY_API_TOKEN != '' && steps.publish.outputs.changed == 'true' }}
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Atualizar site no Fly.io
+        if: ${{ env.FLY_API_TOKEN != '' && steps.publish.outputs.changed == 'true' }}
+        run: flyctl deploy --remote-only

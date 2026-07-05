@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y7RBEBSZM9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Y7RBEBSZM9');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPAB | Igreja Presbiteriana do Alto Branco em Campina Grande</title>
@@ -101,6 +109,7 @@
   ]
 }
 </script>
+<script src="assets/boletins/boletins-auto.js"></script>
 <script>
 (function(){
   if (location.protocol === 'file:') {
@@ -618,7 +627,7 @@
   <div class="container">
     <div class="youtube-wrapper">
       <div class="youtube-embed">
-        <iframe src="https://www.youtube.com/embed/videoseries?si=1h8LzhbkTFiYGmYn&amp;list=PL9Y3q8-GNYnNiQTXKP8c42mC79EhV743P" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="Transmissões IPAB"></iframe>
+        <iframe src="https://www.youtube.com/embed/videoseries?list=UURRL38Mk1LauwdbKkuDCjAA" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="Transmissões IPAB"></iframe>
       </div>
       <div>
         <div class="section-eyebrow">Online</div>
@@ -819,6 +828,7 @@ const LEADERSHIP_PHOTOS = {
   'Pb. Clodoaldo Marquim': 'assets/lideranca/presb-clodoalto.png',
   'Diac. Christian Borges': 'assets/lideranca/diac-christian.png'
 };
+const IPAB_YOUTUBE_UPLOADS_EMBED = 'https://www.youtube.com/embed/videoseries?list=UURRL38Mk1LauwdbKkuDCjAA';
 
 function applyLeadershipPhotosToDOM(){
   document.querySelectorAll('.lider-card').forEach(card => {
@@ -940,7 +950,7 @@ function applyContent(data){
 
   if (data.transmissao) {
     const iframe = document.querySelector('.youtube-embed iframe');
-    if (iframe && data.transmissao.yt_embed) iframe.src = data.transmissao.yt_embed;
+    if (iframe) iframe.src = IPAB_YOUTUBE_UPLOADS_EMBED;
     setText('.youtube-desc', data.transmissao.yt_desc);
     setButtonLabel('.yt-btn', data.transmissao.yt_btn_text);
     setHref('.yt-btn', data.transmissao.yt_url);
@@ -1156,12 +1166,14 @@ const IPAB_BOLETINS = [
   { date: '2026-04-12', id: '1asDzA3U7dgvXzsyTBr8F7L5RjqZeFp0x' },
   { date: '2026-04-19', id: '141_4PU1dcZhyKQjJHStCr2rJls25fWlv' },
   { date: '2026-04-26', id: '150haEGsERmrFrE7jvUealpGwTtz3pskv' },
-  { date: '2026-05-03', id: '1ycyx0Ku1Zy5_t7DQUUlcxxw7NXiYDuLt' },
-  { date: '2026-06-07', id: 'boletim-2026-06-07', url: 'assets/boletins/boletim-2026-06-07.pdf' },
-  { date: '2026-06-14', id: 'boletim-2026-06-14', url: 'assets/boletins/boletim-2026-06-14.pdf' },
-  { date: '2026-06-21', id: 'boletim-2026-06-21', url: 'assets/boletins/boletim-2026-06-21.pdf' },
-  { date: '2026-06-28', id: 'boletim-2026-06-28', url: 'assets/boletins/boletim-2026-06-28.pdf' }
+  { date: '2026-05-03', id: '1ycyx0Ku1Zy5_t7DQUUlcxxw7NXiYDuLt' }
 ];
+(window.IPAB_BOLETINS_AUTO || []).forEach(boletim => {
+  const existing = IPAB_BOLETINS.findIndex(item => item.date === boletim.date);
+  if (existing >= 0) IPAB_BOLETINS.splice(existing, 1);
+  IPAB_BOLETINS.push(boletim);
+});
+IPAB_BOLETINS.sort((a, b) => a.date.localeCompare(b.date));
 let activeBoletimId = IPAB_BOLETINS[IPAB_BOLETINS.length - 1]?.id || '';
 const boletimDateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 function boletimDate(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d);}
