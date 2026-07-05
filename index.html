@@ -512,28 +512,6 @@
     font-style: italic; color: var(--text-muted);
     text-align: right;
   }
-  .conference-popup-backdrop {
-    position: fixed; inset: 0; z-index: 2000;
-    background: rgba(8,4,6,0.82); backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 1rem; opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-  .conference-popup-backdrop.open { opacity: 1; pointer-events: all; }
-  .conference-popup-frame {
-    width: min(430px, 100%); height: min(760px, 95vh);
-    border: 0; border-radius: 3px;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.65);
-    background: transparent;
-  }
-  .conference-popup-close {
-    position: fixed; top: 16px; right: 16px; z-index: 2001;
-    width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(0,0,0,0.55); color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-  }
-  .conference-popup-close:hover { background: var(--burgundy); }
   .aviso-card.clickable { cursor: pointer; }
   .aviso-card.clickable:hover .aviso-title { color: var(--burgundy); }
 </style>
@@ -810,12 +788,6 @@
     </div>
     <div class="modal-footer">Campina Grande, 01 de Março de 2026.</div>
   </div>
-</div>
-
-<!-- POP-UP CONFERÊNCIA CONFESSIONALIDADE REFORMADA -->
-<div class="conference-popup-backdrop" id="conferencePopup" role="dialog" aria-modal="true" aria-label="Conferência Confessionalidade Reformada">
-  <button class="conference-popup-close" id="conferencePopupClose" aria-label="Fechar pop-up">&#10005;</button>
-  <iframe class="conference-popup-frame" src="assets/avisos/popup_conferencia.html" title="Conferência Confessionalidade Reformada"></iframe>
 </div>
 
 <script>
@@ -1115,24 +1087,6 @@ setupAssemblyCard();
 document.getElementById("modalClose").addEventListener("click", closeModal);
 backdrop.addEventListener("click",(e)=>{if(e.target===backdrop)closeModal();});
 document.addEventListener("keydown",(e)=>{if(e.key==="Escape")closeModal();});
-
-const conferencePopup = document.getElementById("conferencePopup");
-const conferencePopupClose = document.getElementById("conferencePopupClose");
-function openConferencePopup(){
-  if (!conferencePopup) return;
-  conferencePopup.classList.add("open");
-  document.body.style.overflow = "hidden";
-}
-function closeConferencePopup(){
-  if (!conferencePopup) return;
-  conferencePopup.classList.remove("open");
-  document.body.style.overflow = "";
-}
-conferencePopupClose?.addEventListener("click", closeConferencePopup);
-conferencePopup?.addEventListener("click", e => { if (e.target === conferencePopup) closeConferencePopup(); });
-window.addEventListener("message", e => { if (e.data?.type === "ipab-conference-popup-close") closeConferencePopup(); });
-window.addEventListener("load", () => setTimeout(openConferencePopup, 500));
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeConferencePopup(); });
 
 function setupDynamicPopups(){
   document.querySelectorAll('.aviso-card[data-popup-idx]').forEach(card => {
